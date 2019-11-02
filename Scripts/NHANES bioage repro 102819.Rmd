@@ -1,0 +1,437 @@
+---
+title: "NHANES reproduction bioage collaboration"
+author: "Talia Shirazi, Calen Ryan, Waylon Hastings et al"
+date: "October 23, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##Welcome! 
+This is the initial report (10.24.2019) for the NHANES reproduction bioage project, largely based on papers by two smart people on [costs of reproduction](https://www.nature.com/articles/s41598-018-29486-4) and on [biological aging measures in NHANES](https://www.ncbi.nlm.nih.gov/pubmed/30999227). Feedback is highly encouraged. I'm excited about this project, and if you're reading this, I hope you are too. 
+
+Before we get started, a quick note about the different aging measures we'll see. For all except for telomere length, higher = associated with older age, and lower = associated with younger age; for telomere length, we'd expect the opposite.
+
+Homeostatic Dysregulation (HD) and the Klemera-Doubal Method (KDM) utilize the same 12 markers, though the underlying math differs. The markers are as follows: albumin, alkaline phosphatase, blood urea nitrogen, creatinine, C-reactive protein, glycated hemoglobin, uric acid, white blood cell count, lymphocyte percent, mean corpuscular volume, red cell distribution width, and systolic blood pressure.
+
+The Levine Method (LM) has some overlap with the methods above, but utilizes the following 9 markers: albumin, alkaline phosphatase, creatinine, c-reactive protein, glucose, white blood cell count, lymphocyte percent, mean corpuscular volume, and red cell distribution width. 
+
+As for Telomere Length, you already know. Now that we have a better understanding of these measures, let's get to it!
+
+Load the 8 million packages we'll need.
+
+```{r message=FALSE, warning=FALSE }
+library(RNHANES)
+library(haven)
+library(psych)
+library(dplyr)
+library(ggplot2)
+library(survey)
+library(factoextra)
+library(jtools)
+library(ggstance)
+library(corrplot)
+library(GGally)
+library(stargazer)
+```
+
+In this step, we'll load the necessary NHANES data frames, recode, and do some general wrangling so that datasets can be combined and analyzed. 
+
+```{r message=FALSE}
+demo1 <- nhanes_load_data("DEMO", "1999-2000", demographics = FALSE)
+demo2 <- nhanes_load_data("DEMO_B", "2001-2002", demographics = FALSE)
+
+demo1 <- demo1[,c("SEQN", "SDMVPSU", "SDMVSTRA")]
+demo2 <- demo2[,c("SEQN", "SDMVPSU", "SDMVSTRA")]
+DEMO <- rbind(demo1,demo2)
+
+#### Import smoking aq's
+
+smq1 <- nhanes_load_data("SMQ", "1999-2000", demographics = FALSE)
+smq2 <- nhanes_load_data("SMQ_B", "2001-2002", demographics = FALSE)
+
+smq1_short<-smq1[c("SMQ020", "SMQ040", "SEQN")]
+smq2_short<-smq2[c("SMQ020", "SMQ040", "SEQN")]
+#SMQ020 Smoked 100 cigarettes in life? 1 = yes 2 = no
+#SMQ040 DO you now smoke cigarettes? 1 = every day, 2 = some days, 3 = not at all
+
+SMQ<- rbind(smq1_short,smq2_short)
+
+SMQ <- na_if(SMQ, 7)
+SMQ <- na_if(SMQ, 9)
+
+SMQ$smoking <- 2 #current smoker
+SMQ$smoking[SMQ$SMQ020==2]<-0 #never smoker
+SMQ$smoking[SMQ$SMQ040==3]<-1 #past smoker
+
+#remove one person with no SEQN
+SMQ <- SMQ[which(SMQ$SEQN>0),]
+
+#### RHQ 
+
+rhq1 <- nhanes_load_data("RHQ", "1999-2000", demographics = FALSE)
+rhq2 <- nhanes_load_data("RHQ_B", "2001-2002", demographics = FALSE)
+
+rhq1_short<- rhq1[c("SEQN", "RHD130", "RHQ140", "RHQ150", "RHQ160", "RHD170", "RHQ180", "RHQ190", "RHQ200", "RHQ210", "RHD230")]
+#RHD130 Ever been pregnant? 1 = yes, 2= no
+#RHQ140 Think you are pregnant now? 1 = yes, 9 = don't know
+#RHQ150 What month of pregnancy are you in? 1-10 = range of values, 99 = don't know
+#RHQ160 How many times have you been pregnant? 1-55 = range of values, 77 = refused, 99 = don't know
+#RHD170 Number of pregnancies resulting in live births 1-10 = range of values, 11 = 11 or more, 77 = refused
+#RHQ180 Age of first live birth 13-41 = range of values, 999= don't know
+#RHQ190 Age at last live birth 11-57 = range of values, 999 = don't know
+#RHQ200 Now breastfeeding a child? 1 = yes, 2 = no
+#RHQ210 breastfed any of your children? 1 = yes, 2 = no
+#RHD230 Number of children breastfed at least 1 month 0-13 = range of values
+
+rhq2_short<- rhq2[c("SEQN", "RHD130", "RHQ141", "RHQ151", "RHQ160", "RHD170", "RHQ180", "RHQ190", "RHQ200", "RHQ210", "RHD230")]
+#RHD130 Ever been pregnant? 1 = yes, 2= no, 9 = don't know
+#RHQ141 Think you are pregnant now? 1 = yes, 9 = don't know
+#RHQ151 What month of pregnancy are you in? 1-9 = range of values, 99 = don't know
+#RHQ160 How many times have you been pregnant? 1-18 = range of values, 77 = refused, 99 = don't know
+#RHD170 Number of pregnancies resulting in live births 1-10 = range of values, 11 = 11 or more, 77 = refused
+#RHQ180 Age of first live birth 12-39 = range of values, 999= don't know
+#RHQ190 Age at last live birth 13-57 = range of values, 999 = don't know
+#RHQ200 Now breastfeeding a child? 1 = yes, 2 = no
+#RHQ210 breastfed any of your children? 1 = yes, 2 = no, don't know = 9
+#RHD230 Number of children breastfed at least 1 month 0-13 = range of values, 99 = don't know
+
+#Change column names so can rbind
+colnames(rhq2_short)[3:4] <- c("RHQ140","RHQ150")
+
+#Combine cycles
+RHQ<- rbind(rhq1_short,rhq2_short)
+
+#Change column names so they don't suck
+colnames(RHQ)[2:11] <- c("everpreg", "currentpreg", "currentpregmonth", "timespreg", "livebirths", "firstlivebirth", "lastlivebirth", "currentbreastfeed", "everbreastfed", "numberbreastfed")
+
+#Recode the 'refused' and 'don't know's in RHQ data as NA (values differ by variable)
+RHQ <- na_if(RHQ, 999)
+RHQ <- na_if(RHQ, 77)
+RHQ <- na_if(RHQ, 99)
+RHQ$everpreg <- na_if(RHQ$everpreg, 9)
+RHQ$everbreastfed <- na_if(RHQ$everbreastfed, 9)
+
+RHQSMQ <- merge(RHQ, SMQ, by = "SEQN", all = TRUE)
+NHANES <- merge(RHQSMQ, DEMO, by = "SEQN", all = TRUE)
+```
+
+Brief sanity check that the 'number of live births' and 'ever pregnant' variables were recoded correctly. 
+
+```{r message=FALSE}
+table(NHANES$livebirths, NHANES$everpreg)
+```
+
+Now we transform the live births variable because it is visibly skewed. We'll add 1 and then log-transform. We'll also square that and create a new term, livebirths2, so we can test for quadratic effects. In this step we'll also transform the variable indexing whether a woman has ever been pregnant so that 0 = never pregnant, and 1 = ever pregnant.
+
+```{r message=FALSE}
+NHANES$livebirths<-(log(NHANES$livebirths+1))
+NHANES$livebirths2 <- NHANES$livebirths^2
+NHANES$everpreg[NHANES$everpreg==2]<-0
+```
+
+We'll now import the bioage measure dataset, do some recoding, combine it with the NHANES dataset we obtained above, and de-clutter. 
+
+```{r message=FALSE}
+NHANES_BA_Talia <- read_sav("C:/Users/talia/Box Sync/NHANES/Biological aging reproduction project/NHANES_BA_Talia.sav")
+colnames(NHANES_BA_Talia)[1] <- "SEQN"
+
+#Combine all data
+df <- merge(NHANES,NHANES_BA_Talia,by="SEQN")
+
+#Declutter
+rm(NHANES_BA_Talia, RHQ, rhq1, rhq1_short, rhq2, rhq2_short, smq1, smq1_short, smq2, smq2_short, SMQ)
+```
+
+Better. Now we'll specify the survey design -- this takes into account things like sample weights, which allow us to extrapolate our data beyond our sample and calculate population-based estimates. 
+
+```{r message=FALSE}
+base <- svydesign(id      = ~SDMVPSU,
+                          strata  = ~SDMVSTRA,
+                          weights = ~WTMEC4YR,
+                          nest    = TRUE,
+                          data    = df)
+```
+
+Survey design specification part two: our subsample. We now indicate that we want to look at a specific subpopulation of all NHANES 1999-2002 data: women between 18 and 50 who aren't currently pregnant, and who have nonmissing data for number of live births.
+
+```{r message=FALSE}
+nhanesDesign<- subset(base, age >17 & age < 51 & pregnant !=1 & livebirths>-1)
+```
+
+Alright now the fun stuff -- real stats! First we'll build models looking at each biological aging measure and number of live births alone (no covariates), just for kicks. These models include both a linear term and quadratic term for number of live births. 
+
+Note that we'll be hiding the model outputs for now, and will be visualizing them after all the models have been specified. 
+
+```{r message=FALSE, echo=T, results='hide'}
+summary(a1 <- svyglm(HD ~ livebirths + livebirths2, design = nhanesDesign))
+summary(a2 <- svyglm(LM ~ livebirths + livebirths2, design = nhanesDesign))
+summary(a3 <- svyglm(KDM ~ livebirths + livebirths2, design = nhanesDesign))      
+summary(a4 <- svyglm(log_telo ~ livebirths + livebirths2, design = nhanesDesign))
+```
+
+Because these biological aging measures are correlated with chronological age, we'll repeat what we did above, this time including chronological age. 
+
+```{r message=FALSE, echo=T, results='hide'}
+summary(b1 <- svyglm(HD ~ livebirths + livebirths2 + age, design = nhanesDesign))
+summary(b2 <- svyglm(LM ~ livebirths + livebirths2 + age, design = nhanesDesign))
+summary(b3 <- svyglm(KDM ~ livebirths + livebirths2 + age, design = nhanesDesign))      
+summary(b4 <- svyglm(log_telo ~ livebirths + livebirths2 + age, design = nhanesDesign))
+```
+
+There are obviously other things that affect biological aging; some examples that have been controlled for in past work on [reproduction and telomere length in NHANES](https://academic.oup.com/humrep/article/33/4/736/4858327) are smoking status and BMI. We'll control for them in the models below. 
+
+```{r message=FALSE, echo=T, results='hide'}
+summary(c1 <- svyglm(HD ~ livebirths + livebirths2 + age + bmi + smoking, design = nhanesDesign))
+summary(c2 <- svyglm(LM ~ livebirths + livebirths2 + age + bmi + smoking, design = nhanesDesign))
+summary(c3 <- svyglm(KDM ~ livebirths + livebirths2 + age + bmi + smoking, design = nhanesDesign))      
+summary(c4 <- svyglm(log_telo ~ livebirths + livebirths2 + age + bmi + smoking, design = nhanesDesign))
+```
+
+There are yet MORE things that we could control for. In the models below, we'll also control for education, income, food security, and self-reported ethnicity (in addition to chronological age, BMI, and smoking status).
+
+```{r message=FALSE, echo=T, results='hide'}
+summary(d1 <- svyglm(HD ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign))
+summary(d2 <- svyglm(LM ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign))
+summary(d3 <- svyglm(KDM ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign))      
+summary(d4 <- svyglm(log_telo ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign))
+```
+
+If we're interested in testing whether the relationship between number of live births and biological aging differs based on resource availibility (oh hey, we indeed are!), we need to create a composite of 'resource availibility' based on the measures we've got. Keep in mind that this is a rough, likely noisy proxy for true 'resource availibility.'
+
+```{r message=FALSE}
+#First, need to select complete cases 
+df2<- df %>%
+  filter(complete.cases(education, poverty, food_security))
+
+pca<-prcomp(df2[,c("education", "poverty", "food_security")], scale=TRUE)
+pca_values<-get_pca_ind(pca)
+pca_values<-as.data.frame(pca_values$coord)
+df2<-cbind(df2,pca_values)
+
+#Median split for Dim.1
+df2$Dimmediansplit<- 1 # high resource availibility
+df2$Dimmediansplit[df2$Dim.1>-0.01] <- 0 # low resource availibility
+
+#Select columns of interest in df2
+df2<-df2[,c("SEQN", "Dim.1", "Dimmediansplit")]
+
+#Merge with df
+df <- merge(df,df2, by="SEQN", all = TRUE)
+```
+
+Now we redefine survey parametersfor this new dataset. 
+
+```{r message=FALSE}
+base <- svydesign(id      = ~SDMVPSU,
+                          strata  = ~SDMVSTRA,
+                          weights = ~WTMEC4YR,
+                          nest    = TRUE,
+                          data    = df)
+
+nhanesDesign<- subset(base, age >17 & age < 51 & pregnant !=1 & livebirths>-1)
+nhanesDesign2<- subset(base, age >17 & age < 51 & pregnant !=1 & livebirths>-1 & Dimmediansplit == 0)
+nhanesDesign3<- subset(base, age >17 & age < 51 & pregnant !=1 & livebirths>-1 & Dimmediansplit == 1)
+```
+
+Run models, run! 
+
+```{r message=FALSE}
+summary(e1 <- svyglm(HD ~ livebirths*Dim.1 + livebirths2*Dim.1 + age + bmi + smoking + ridreth1, design = nhanesDesign))
+summary(e2 <- svyglm(LM ~ livebirths*Dim.1 + livebirths2*Dim.1 + age + bmi + smoking + ridreth1, design = nhanesDesign))
+summary(e3 <- svyglm(KDM ~ livebirths*Dim.1 + livebirths2*Dim.1 + age + bmi + smoking + ridreth1, design = nhanesDesign))
+summary(e4 <- svyglm(log_telo ~ livebirths*Dim.1 + livebirths2*Dim.1 + age + bmi + smoking + ridreth1, design = nhanesDesign))
+```
+
+There is a significant Dim.1 (i.e., our composite measuring 'resource availibility') x live births interaction when predicting KDM. Let's dig deeper into that by running those same models separately for women with lower and higher resource availibility, in that order. 
+
+```{r message=FALSE}
+summary(e2.1 <- svyglm(KDM ~ livebirths + livebirths2 + age + bmi + smoking + ridreth1, design = nhanesDesign2))
+summary(e2.2 <- svyglm(KDM ~ livebirths + livebirths2 + age + bmi + smoking + ridreth1, design = nhanesDesign3))
+```
+
+Potentially interesting, but potentially some weird spurious thing. What does it look like? 
+
+```{r message=FALSE, echo=FALSE}
+effect_plot(e2.1, pred = livebirths, interval = TRUE, plot.points = TRUE, partial.residuals = TRUE, main.title = "Low resource availibility")
+effect_plot(e2.2, pred = livebirths, interval = TRUE, plot.points = TRUE, partial.residuals = TRUE, main.title = "High resource availibility")
+```
+
+We'll think about this more later...
+
+In the meantime, let's make some pretty pictures to summarize our above models. The visuals will describe models 1 through 5. Here's what those mean: 
+
+- Model 1: No covariates. Remember that this model knowingly sucks and is just being included to demonstrate the effect of adding in covariates.
+
+- Model 2: Age as covariate
+
+- Model 3: Age, BMI, and smoking status as covariates
+
+- Model 4: Age, BMI, smoking status, education, income, food security, and self-identified race/ethnicity as covariates
+
+- Model 5: Age, BMI, smoking status, ethnicity, and the the composite of 'resource availibility' as covariates
+
+```{r message=FALSE, echo=FALSE}
+
+apatheme=theme_bw()+
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        panel.border=element_blank(),
+        axis.line=element_line(),
+        legend.title=element_blank(), 
+        axis.text=element_text(size=20),
+        axis.title=element_text(size=20),
+        legend.text = element_text(size = 16),
+        axis.title.y = element_blank(),
+        plot.title = element_text(size = 20, face = "bold"))
+
+#Plot for HD
+HDplot1<-plot_summs(a1, b1, c1, d1, e1, 
+           coefs = c("# Live Births (linear)" = "livebirths", "# Live births (quadratic)" = "livebirths2", "Current Age" = "age"),
+           scale = TRUE) + apatheme + ggtitle("Homeostatic Dysregulation")
+
+#Plot for LM
+LMplot1<-plot_summs(a2, b2, c2, d2, e2, 
+                   coefs = c("# Live Births (linear)" = "livebirths", "# Live births (quadratic)" = "livebirths2", "Current Age" = "age"),
+                   scale = TRUE) + apatheme + ggtitle("Levine Method")
+
+#Plot for KDM
+KDMplot1<-plot_summs(a3, b3, c3, d3, e3, 
+                   coefs = c("# Live Births (linear)" = "livebirths", "# Live births (quadratic)" = "livebirths2", "Current Age" = "age"),
+                   scale = TRUE) + apatheme + ggtitle("Klemera-Doubal Method")
+
+#Plot for telo
+TELOplot1<-plot_summs(a4, b4, c4, d4, e4, 
+                    coefs = c("# Live Births (linear)" = "livebirths", "# Live births (quadratic)" = "livebirths2", "Current Age" = "age"),
+                    scale = TRUE) + apatheme + ggtitle("Telomere Length (log)")
+
+HDplot1
+LMplot1
+KDMplot1
+TELOplot1
+```
+
+Let's visualize this another way -- using partial residual plots. These represent estimates from Model 5 (aka all covariates, 'resource availibility' composite). 
+
+```{r message=FALSE, echo=FALSE}
+HDplot3 <- effect_plot(e1, pred = livebirths, interval = TRUE, plot.points = TRUE, partial.residuals = TRUE,  main.title = "Homeostatic dysregulation")
+LMplot3 <- effect_plot(e2, pred = livebirths, interval = TRUE, plot.points = TRUE, partial.residuals = TRUE, main.title = "Levine Method")
+KDMplot3 <- effect_plot(e3, pred = livebirths, interval = TRUE, plot.points = TRUE, partial.residuals = TRUE, main.title = "Klemera-Doubal Method")
+TELOplot3 <- effect_plot(e4, pred = livebirths, interval = TRUE, plot.points = TRUE, partial.residuals = TRUE, main.title = "Telomere Length (log)")
+
+HDplot3
+LMplot3
+KDMplot3
+TELOplot3
+```
+
+Maybe you're more of a tables-and-charts kind of person, rather than a figures-and-graphs type of person. Don't worry, I've got you covered. Here is a summary table of the results of models which include age, BMI, smoking status, ethnicity, and the the composite of 'resource availibility' as covariates (and obviously, number of live births).  
+
+```{r, results = 'asis', echo = FALSE}
+stargazer(e1,e2,e3,e4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+```
+
+  
+Let's continue holding off on the whole interpretation thing for now, and move to analyzing whether the effect of having ever given live birth -- irrespective of the number of times -- modulates any of our biological aging measures. The models will be exactly the same as above, with the variable 'everpreg' substituted in. 
+
+```{r message=FALSE, echo=T, results='hide'}
+base <- svydesign(id      = ~SDMVPSU,
+                          strata  = ~SDMVSTRA,
+                          weights = ~WTMEC4YR,
+                          nest    = TRUE,
+                          data    = df)
+
+nhanesDesign<- subset(base, age >17 & age < 51 & pregnant !=1 & everpreg>-1)
+
+#Bioage and parity -- no covariates
+summary(f1 <- svyglm(HD ~ everpreg, design = nhanesDesign))
+summary(f2 <- svyglm(LM ~ everpreg, design = nhanesDesign))
+summary(f3 <- svyglm(KDM ~ everpreg, design = nhanesDesign))      
+summary(f4 <- svyglm(log_telo ~ everpreg, design = nhanesDesign))
+
+#Bioage and parity -- age only as covariate
+summary(g1 <- svyglm(HD ~ everpreg + age, design = nhanesDesign))
+summary(g2 <- svyglm(LM ~ everpreg + age, design = nhanesDesign))
+summary(g3 <- svyglm(KDM ~ everpreg + age, design = nhanesDesign))      
+summary(g4 <- svyglm(log_telo ~ everpreg + age, design = nhanesDesign))
+
+#Bioage and parity -- age, BMI, and smoking
+summary(h1 <- svyglm(HD ~ everpreg + age + bmi + smoking, design = nhanesDesign))
+summary(h2 <- svyglm(LM ~ everpreg + age + bmi + smoking, design = nhanesDesign))
+summary(h3 <- svyglm(KDM ~ everpreg + age + bmi + smoking, design = nhanesDesign))      
+summary(h4 <- svyglm(log_telo ~ everpreg + age + bmi + smoking, design = nhanesDesign))
+
+#Bioage and parity -- age, BMI, smoking, education, poverty, ethnicity, and food security
+summary(i1 <- svyglm(HD ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign))
+summary(i2 <- svyglm(LM ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign))
+summary(i3 <- svyglm(KDM ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign))   
+summary(i4 <- svyglm(log_telo ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign))
+
+#Bioage and live births -- age, BMI, ethnicity, and PC for resources
+
+summary(j1 <- svyglm(HD ~ everpreg*Dim.1 + age + bmi + smoking + ridreth1, design = nhanesDesign))
+summary(j2 <- svyglm(LM ~ everpreg*Dim.1 + age + bmi + smoking + ridreth1, design = nhanesDesign))
+summary(j3 <- svyglm(KDM ~ everpreg*Dim.1 + age + bmi + smoking + ridreth1, design = nhanesDesign)) 
+summary(j4 <- svyglm(log_telo ~ everpreg*Dim.1 + age + bmi + smoking + ridreth1, design = nhanesDesign))
+```
+
+Note that none of the ever pregnant x 'resource availibility' interactions were significant (at p <0.05).  
+
+You want the pretty pictures of those models? Alright alright, here they are. Also, note that parity below = nulliparous or parous. For example, a negative effect of 'parity' on HD would be interpreted as, women who have previously given birth have lower HD than women who have not previously given birth.
+
+```{r message=FALSE, echo=FALSE}
+#Plot for HD
+HDplot2<-plot_summs(f1, g1, h1, i1, j1, 
+                   coefs = c("Parity" = "everpreg", "Current Age" = "age"), 
+                   scale = TRUE) + apatheme + ggtitle("Homeostatic Dysregulation")
+
+#Plot for LM
+LMplot2<-plot_summs(f2, g2, h2, i2, j2, 
+                   coefs = c("Parity" = "everpreg", "Current Age" = "age"),
+                   scale = TRUE) + apatheme + ggtitle("Levine Method")
+
+#Plot for KDM
+KDMplot2<-plot_summs(f3, g3, h3, i3, j3, 
+                    coefs = c("Parity" = "everpreg", "Current Age" = "age"),
+                    scale = TRUE) + apatheme + ggtitle("Klemera-Doubal Method")
+
+#Plot for telo
+TELOplot2<-plot_summs(f4, g4, h4, i4, j4, 
+                     coefs = c("Parity" = "everpreg", "Current Age" = "age"), 
+                     scale = TRUE) + apatheme + ggtitle("Telomere Length (log)")
+
+HDplot2
+LMplot2
+KDMplot2
+TELOplot2
+```
+
+
+And for those of us who hate figures, here's a table for models which include age, BMI, smoking status, ethnicity, and the the composite of 'resource availibility' as covariates (and obviously, whether a woman has ever been pregnant).  
+
+```{r, results = 'asis', echo = FALSE}
+stargazer(j1,j2,j3,j4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = " +p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+```
+ 
+  
+Not analysis-based but potentially informative: here's a correlation matrix (values represent r values) for many variables of interest analyzed above. 
+
+```{r message=FALSE, echo=FALSE}
+dfcor<-df[c("livebirths", "age", "bmi", "food_security", "poverty", "education", "smoking", "HD", "LM", "KDM", "log_telo")]
+M<- cor(dfcor, use = "pairwise.complete.obs")
+
+cor_plot<-corrplot(M, method="color",  
+         type="upper", 
+         addCoef.col = "black", 
+         tl.col="black", tl.srt=45, 
+         diag=FALSE, number.cex=0.75)
+```
+
+Let's look at a correlation matrix for just the biological aging measures.
+
+```{r message=FALSE, echo=FALSE, warning=FALSE}
+subset = df[,c("HD", "LM", "KDM", "log_telo")]
+ggpairs(subset)
+```
+
