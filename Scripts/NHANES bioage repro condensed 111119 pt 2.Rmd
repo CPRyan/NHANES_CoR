@@ -1,0 +1,280 @@
+---
+title: "NHANES reproduction bioage collaboration"
+author: "Talia + Calen + Waylon (+ others?)"
+date: "November 11, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Load packages
+```{r message=FALSE, warning=FALSE }
+library(RNHANES)
+library(haven)
+library(psych)
+library(dplyr)
+library(ggplot2)
+library(survey)
+library(factoextra)
+library(jtools)
+library(ggstance)
+library(corrplot)
+library(GGally)
+library(stargazer)
+```
+
+##Download data, merge stuff, & do some transformations
+```{r message=FALSE}
+demo1 <- nhanes_load_data("DEMO", "1999-2000", demographics = FALSE)
+demo2 <- nhanes_load_data("DEMO_B", "2001-2002", demographics = FALSE)
+
+demo1 <- demo1[,c("SEQN", "SDMVPSU", "SDMVSTRA")]
+demo2 <- demo2[,c("SEQN", "SDMVPSU", "SDMVSTRA")]
+DEMO <- rbind(demo1,demo2)
+
+#### Import smoking aq's
+
+smq1 <- nhanes_load_data("SMQ", "1999-2000", demographics = FALSE)
+smq2 <- nhanes_load_data("SMQ_B", "2001-2002", demographics = FALSE)
+
+smq1_short<-smq1[c("SMQ020", "SMQ040", "SEQN")]
+smq2_short<-smq2[c("SMQ020", "SMQ040", "SEQN")]
+#SMQ020 Smoked 100 cigarettes in life? 1 = yes 2 = no
+#SMQ040 DO you now smoke cigarettes? 1 = every day, 2 = some days, 3 = not at all
+
+SMQ<- rbind(smq1_short,smq2_short)
+
+SMQ <- na_if(SMQ, 7)
+SMQ <- na_if(SMQ, 9)
+
+SMQ$smoking <- 2 #current smoker
+SMQ$smoking[SMQ$SMQ020==2]<-0 #never smoker
+SMQ$smoking[SMQ$SMQ040==3]<-1 #past smoker
+
+#remove one person with no SEQN
+SMQ <- SMQ[which(SMQ$SEQN>0),]
+
+#### RHQ 
+
+rhq1 <- nhanes_load_data("RHQ", "1999-2000", demographics = FALSE)
+rhq2 <- nhanes_load_data("RHQ_B", "2001-2002", demographics = FALSE)
+
+rhq1_short<- rhq1[c("SEQN", "RHD130", "RHQ140", "RHQ150", "RHQ160", "RHD170", "RHQ180", "RHQ190", "RHQ200", "RHQ210", "RHD230","RHQ030", "RHQ040", "RHQ060")]
+#RHD130 Ever been pregnant? 1 = yes, 2= no
+#RHQ140 Think you are pregnant now? 1 = yes, 9 = don't know
+#RHQ150 What month of pregnancy are you in? 1-10 = range of values, 99 = don't know
+#RHQ160 How many times have you been pregnant? 1-55 = range of values, 77 = refused, 99 = don't know
+#RHD170 Number of pregnancies resulting in live births 1-10 = range of values, 11 = 11 or more, 77 = refused
+#RHQ180 Age of first live birth 13-41 = range of values, 999= don't know
+#RHQ190 Age at last live birth 11-57 = range of values, 999 = don't know
+#RHQ200 Now breastfeeding a child? 1 = yes, 2 = no
+#RHQ210 breastfed any of your children? 1 = yes, 2 = no
+#RHD230 Number of children breastfed at least 1 month 0-13 = range of values
+#RHQ030 had regular periods in the last 12 months?
+#RHQ040 reason not having regular periods (5= menopause)
+
+rhq2_short<- rhq2[c("SEQN", "RHD130", "RHQ141", "RHQ151", "RHQ160", "RHD170", "RHQ180", "RHQ190", "RHQ200", "RHQ210", "RHD230","RHQ030", "RHQ040", "RHQ060")]
+#RHD130 Ever been pregnant? 1 = yes, 2= no, 9 = don't know
+#RHQ141 Think you are pregnant now? 1 = yes, 9 = don't know
+#RHQ151 What month of pregnancy are you in? 1-9 = range of values, 99 = don't know
+#RHQ160 How many times have you been pregnant? 1-18 = range of values, 77 = refused, 99 = don't know
+#RHD170 Number of pregnancies resulting in live births 1-10 = range of values, 11 = 11 or more, 77 = refused
+#RHQ180 Age of first live birth 12-39 = range of values, 999= don't know
+#RHQ190 Age at last live birth 13-57 = range of values, 999 = don't know
+#RHQ200 Now breastfeeding a child? 1 = yes, 2 = no
+#RHQ210 breastfed any of your children? 1 = yes, 2 = no, don't know = 9
+#RHD230 Number of children breastfed at least 1 month 0-13 = range of values, 99 = don't know
+
+#Change column names so can rbind
+colnames(rhq2_short)[3:4] <- c("RHQ140","RHQ150")
+
+#Combine cycles
+RHQ<- rbind(rhq1_short,rhq2_short)
+
+#Change column names so they don't suck
+colnames(RHQ)[2:14] <- c("everpreg", "currentpreg", "currentpregmonth", "timespreg", "livebirths", "firstlivebirth", "lastlivebirth", "currentbreastfeed", "everbreastfed", "numberbreastfed", "mensregularity", "irregreason", "ageLMP")
+
+#Recode the 'refused' and 'don't know's in RHQ data as NA (values differ by variable)
+RHQ <- na_if(RHQ, 999)
+RHQ <- na_if(RHQ, 77)
+RHQ <- na_if(RHQ, 99)
+RHQ$everpreg <- na_if(RHQ$everpreg, 9)
+RHQ$everbreastfed <- na_if(RHQ$everbreastfed, 9)
+
+RHQSMQ <- merge(RHQ, SMQ, by = "SEQN", all = TRUE)
+NHANES <- merge(RHQSMQ, DEMO, by = "SEQN", all = TRUE)
+
+#Create quadratic term for live births
+NHANES$livebirths2 <- NHANES$livebirths^2
+
+#Transform the variable indexing whether a woman has ever been pregnant so that 0 = never pregnant, and 1 = ever pregnant
+NHANES$everpreg[NHANES$everpreg==2]<-0
+
+#Download biological age file
+NHANES_BA_Talia <- read_sav(here("Data/NHANES_BA_Talia.sav"))
+colnames(NHANES_BA_Talia)[1] <- "SEQN"
+
+#Combine all data
+df <- merge(NHANES,NHANES_BA_Talia,by="SEQN")
+
+#Recode race/ethnicity to group all Hispanic-identifying individuals together
+df$ridreth1[df$ridreth1==3]<-1
+
+#Create variable for menopause
+df$menopause <- NA
+df$menopause[df$irregreason==5] <- 1
+df$menopause[df$irregreason==1 | df$irregreason==2 | df$irregreason==3 | df$irregreason==4 | df$irregreason==6] <- 0
+df$timenoperiod<-df$age-df$ageLMP
+df$menopause[df$timenoperiod >1 & (df$irregreason!=1 | df$irregreason!=2 | df$irregreason!=3 | df$irregreason!=4 | df$irregreason!=6 | df$irregreason==5)] <- 1
+df$menopause[df$age>61] <- 1
+df$menopause[df$age<41] <- 0
+df$menopause[df$Gender==2]<-NA
+df$menopause[df$mensregularity==1] <- 0
+```
+
+##Specify survey designs: # of live births
+```{r message=FALSE}
+base <- svydesign(id      = ~SDMVPSU,
+                          strata  = ~SDMVSTRA,
+                          weights = ~WTMEC4YR,
+                          nest    = TRUE,
+                          data    = df)
+
+nhanesDesign1<- subset(base, age > 17 & pregnant != 1 & livebirths > -1 & menopause == 0)
+nhanesDesign2<- subset(base, age > 17 & pregnant != 1 & livebirths > -1 & menopause == 1)
+```
+
+##Most important model (all covariates, no interactions): Premenopausal, # live births
+```{r message=FALSE, echo=T, results='hide'}
+summary(a1 <- svyglm(HD ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+summary(a2 <- svyglm(LM ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+summary(a3 <- svyglm(KDM ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))      
+summary(a4 <- svyglm(log_telo ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+```
+
+##Tables for premenopausal women, # live births
+```{r, results = 'asis', echo = FALSE}
+stargazer(a1,a2,a3,a4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+```
+
+##Most important model (all covariates, no interactions): Postmenopausal, # live births
+```{r message=FALSE, echo=T, results='hide'}
+summary(b1 <- svyglm(HD ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign2))
+summary(b2 <- svyglm(LM ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign2))
+summary(b3 <- svyglm(KDM ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign2))      
+summary(b4 <- svyglm(log_telo ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign2))
+```
+
+##Tables for postmenopausal women, # live births
+```{r, results = 'asis', echo = FALSE}
+stargazer(b1,b2,b3,b4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+```
+
+##Plots, # live births (model 1 = premenopausal, model 2 = postmenopausal)
+```{r message=FALSE, echo=FALSE}
+
+apatheme=theme_bw()+
+  theme(panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        panel.border=element_blank(),
+        axis.line=element_line(),
+        legend.title=element_blank(), 
+        axis.text=element_text(size=20),
+        axis.title=element_text(size=20),
+        legend.text = element_text(size = 16),
+        axis.title.y = element_blank(),
+        plot.title = element_text(size = 20, face = "bold"))
+
+#Plot for HD
+HDplot1<-plot_summs(a1, b1,  
+           coefs = c("# Live Births (linear)" = "livebirths", "# Live births (quadratic)" = "livebirths2", "Current Age" = "age"),
+           scale = TRUE) + apatheme + ggtitle("Homeostatic Dysregulation")
+
+#Plot for LM
+LMplot1<-plot_summs(a2, b2,
+                   coefs = c("# Live Births (linear)" = "livebirths", "# Live births (quadratic)" = "livebirths2", "Current Age" = "age"),
+                   scale = TRUE) + apatheme + ggtitle("Levine Method")
+
+#Plot for KDM
+KDMplot1<-plot_summs(a3, b3,
+                   coefs = c("# Live Births (linear)" = "livebirths", "# Live births (quadratic)" = "livebirths2", "Current Age" = "age"),
+                   scale = TRUE) + apatheme + ggtitle("Klemera-Doubal Method")
+
+#Plot for telo
+TELOplot1<-plot_summs(a4, b4, 
+                    coefs = c("# Live Births (linear)" = "livebirths", "# Live births (quadratic)" = "livebirths2", "Current Age" = "age"),
+                    scale = TRUE) + apatheme + ggtitle("Telomere Length (log)")
+
+HDplot1
+LMplot1
+KDMplot1
+TELOplot1
+```
+
+##Specify survey designs: ever pregnant
+```{r message=FALSE}
+base <- svydesign(id      = ~SDMVPSU,
+                          strata  = ~SDMVSTRA,
+                          weights = ~WTMEC4YR,
+                          nest    = TRUE,
+                          data    = df)
+
+nhanesDesign1<- subset(base, age > 17 & pregnant != 1 & everpreg > -1 & menopause == 0)
+nhanesDesign2<- subset(base, age > 17 & pregnant != 1 & everpreg > -1 & menopause == 1)
+```
+
+##Most important model (all covariates, no interactions): Premenopausal, ever pregnant
+```{r message=FALSE, echo=T, results='hide'}
+summary(c1 <- svyglm(HD ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+summary(c2 <- svyglm(LM ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+summary(c3 <- svyglm(KDM ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))      
+summary(c4 <- svyglm(log_telo ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+```
+
+##Tables for premenopausal women, ever pregnant
+```{r, results = 'asis', echo = FALSE}
+stargazer(c1,c2,c3,c4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+```
+
+##Most important model (all covariates, no interactions): Postmenopausal, ever pregnant
+```{r message=FALSE, echo=T, results='hide'}
+summary(d1 <- svyglm(HD ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign2))
+summary(d2 <- svyglm(LM ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign2))
+summary(d3 <- svyglm(KDM ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign2))      
+summary(d4 <- svyglm(log_telo ~ everpreg + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign2))
+```
+
+##Tables for postmenopausal women, ever pregnant
+```{r, results = 'asis', echo = FALSE}
+stargazer(d1,d2,d3,d4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+```
+
+##Plots, ever pregnant (model 1 = premenopausal, model 2 = postmenopausal)
+```{r message=FALSE, echo=FALSE}
+#Plot for HD
+HDplot2<-plot_summs(c1, d1, 
+                   coefs = c("Parity" = "everpreg", "Current Age" = "age"), 
+                   scale = TRUE) + apatheme + ggtitle("Homeostatic Dysregulation")
+
+#Plot for LM
+LMplot2<-plot_summs(c2, d2,
+                   coefs = c("Parity" = "everpreg", "Current Age" = "age"),
+                   scale = TRUE) + apatheme + ggtitle("Levine Method")
+
+#Plot for KDM
+KDMplot2<-plot_summs(c3, d3,  
+                    coefs = c("Parity" = "everpreg", "Current Age" = "age"),
+                    scale = TRUE) + apatheme + ggtitle("Klemera-Doubal Method")
+
+#Plot for telo
+TELOplot2<-plot_summs(c4, d4, 
+                     coefs = c("Parity" = "everpreg", "Current Age" = "age"), 
+                     scale = TRUE) + apatheme + ggtitle("Telomere Length (log)")
+
+HDplot2
+LMplot2
+KDMplot2
+TELOplot2
+```

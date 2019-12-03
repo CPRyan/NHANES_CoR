@@ -34,6 +34,7 @@ library(ggstance)
 library(corrplot)
 library(GGally)
 library(stargazer)
+library(here) # CPR
 ```
 
 In this step, we'll load the necessary NHANES data frames, recode, and do some general wrangling so that datasets can be combined and analyzed. 
@@ -134,7 +135,8 @@ NHANES$everpreg[NHANES$everpreg==2]<-0
 We'll now import the bioage measure dataset, do some recoding, combine it with the NHANES dataset we obtained above, and de-clutter. 
 
 ```{r message=FALSE}
-NHANES_BA_Talia <- read_sav("C:/Users/talia/Box Sync/NHANES/Biological aging reproduction project/NHANES_BA_Talia.sav")
+
+NHANES_BA_Talia <- read_sav(here("Data/NHANES_BA_Talia.sav"))
 colnames(NHANES_BA_Talia)[1] <- "SEQN"
 
 #Combine all data
