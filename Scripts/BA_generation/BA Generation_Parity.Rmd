@@ -1,5 +1,5 @@
 ---
-title: "Generating Biological Aging Measures for Parity Investigation"
+title: "NHANES Data Download"
 author: "Waylon J. Hastings"
 output: html_document
 ---
@@ -511,7 +511,7 @@ For now this only includes NHANES panels through 2010.
 #Subsetting data
 BA_NHANES_Parity <- dplyr::select(ALL_DATA_Win,SEQN,WAVE,Age,Gender,Pregnant,PHENO_Albumin,PHENO_Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count)
 
-BA_NHANES_Parity <- subset(BA_NHANES_Parity, WAVE<=6  & Age<=84 & Age>=18 & Pregnant==2)
+BA_NHANES_Parity <- subset(BA_NHANES_Parity, WAVE<=6)
 BA_NHANES_Parity <- BA_NHANES_Parity[complete.cases(BA_NHANES_Parity),]
 dim(BA_NHANES_Parity)
 summary(BA_NHANES_Parity)
@@ -529,6 +529,7 @@ BA_NHANES_Parity$CDF[BA_NHANES_Parity$CDF==1] <-NA
 
 BA_NHANES_Parity <- dplyr::mutate(BA_NHANES_Parity,SEQN=SEQN,WAVE=WAVE,PhenoAge=141.50+(log(-0.00553*log(1-CDF))/0.09165))
 summary(BA_NHANES_Parity$PhenoAge)
+cor(BA_NHANES_Parity$PhenoAge,BA_NHANES_Parity$Age, use="pairwise.complete.obs")
 ```
 
 
@@ -540,10 +541,10 @@ Homeostatic dysregulation (HD) is calculated with respect ot a reference populat
 Need to check on cut-off values for glucose and red  cell width 
 
 ```{r}
-#Reference dataframe only includes women for the sake of this project 
-Reference_HD_women <- subset(ALL_DATA,WAVE==10 & Gender==2 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & PHENO_Albumin>35 & PHENO_Albumin<50 & Creatinine>0.6 & Creatinine<1.1 & glucose>=4.4 & glucose<=6.1 & CRP<2 & Lymphocyte_percent>28 & Lymphocyte_percent<55 & MCV>77 & MCV<93 & Red_Cell_Width>11.5 & Red_Cell_Width<14.5 & alkaline_phosphatase>37 & alkaline_phosphatase<98 & White_Count<11)
+#Reference dataframes by sex 
+Reference_HD_women <- subset(ALL_DATA,WAVE==10 & Gender==2 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & PHENO_Albumin>=35 & PHENO_Albumin<=50 & Creatinine>=0.6 & Creatinine<=1.1 & glucose>=3.9 & glucose<=6.1 & CRP<2 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=77 & MCV<=93 & Red_Cell_Width>=11.5 & Red_Cell_Width<=14.5 & alkaline_phosphatase>=37 & alkaline_phosphatase<=98 & White_Count<11)
 
-Reference_HD_men <- subset(ALL_DATA,WAVE==10 & Gender==1 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & PHENO_Albumin>35 & PHENO_Albumin<50 & Creatinine>0.8 & Creatinine<1.3 & glucose>=4.4 & glucose<=6.1 & CRP<2 & Lymphocyte_percent>28 & Lymphocyte_percent<55 & MCV>77 & MCV<93 & Red_Cell_Width>11.5 & Red_Cell_Width<14.5 & alkaline_phosphatase>45 & alkaline_phosphatase<115 & White_Count<11)
+Reference_HD_men <- subset(ALL_DATA,WAVE==10 & Gender==1 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & PHENO_Albumin>=35 & PHENO_Albumin<=50 & Creatinine>=0.8 & Creatinine<=1.3 & glucose>=3.9 & glucose<=6.1 & CRP<2 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=77 & MCV<=93 & Red_Cell_Width>=11.5 & Red_Cell_Width<=14.5 & alkaline_phosphatase>=45 & alkaline_phosphatase<=115 & White_Count<11)
 
 dim(Reference_HD_women)
 dim(Reference_HD_men)
@@ -577,14 +578,14 @@ S_inv_men <- solve(S_men)
 **Computing HD for Participants in Analytical Sample**
 
 ```{r}
-#Selecting only women 
-BA_HD_Calc_women <- subset(ALL_DATA,Gender==2 & WAVE<=6 & Age>=18 & Age<=84 & Pregnant==2)
-BA_HD_Calc_men <- subset(ALL_DATA,Gender==1 & WAVE<=6 & Age>=18 & Age<=84)
+BA_HD_Calc_women <- subset(BA_NHANES_Parity,Gender==2)
+BA_HD_Calc_men <- subset(BA_NHANES_Parity,Gender==1)
 
 BA_HD_Calc2_women <- dplyr::select(BA_HD_Calc_women,PHENO_Albumin,PHENO_Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase)
-
+BA_HD_Calc2_women <- BA_HD_Calc2_women[complete.cases(BA_HD_Calc2_women),]
 
 BA_HD_Calc2_men <- dplyr::select(BA_HD_Calc_men,PHENO_Albumin,PHENO_Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase)
+BA_HD_Calc2_men <- BA_HD_Calc2_men[complete.cases(BA_HD_Calc2_men),]
 
 library(stats)
 #Calculated squared mahalanobis distance
@@ -602,9 +603,10 @@ BA_HD_women <- dplyr::select(BA_HD_Calc_women,SEQN,HD)
 BA_HD_men <- dplyr::select(BA_HD_Calc_men,SEQN,HD)
 BA_HD <- dplyr::bind_rows(BA_HD_women,BA_HD_men)
 
-ALL_DATA <- dplyr::full_join(ALL_DATA,BA_HD,by="SEQN")
-ALL_DATA$LOG_HD <- log(ALL_DATA$HD)
-summary(ALL_DATA$LOG_HD)
+BA_NHANES_Parity <- dplyr::full_join(BA_NHANES_Parity,BA_HD,by="SEQN")
+BA_NHANES_Parity$LOG_HD <- log(BA_NHANES_Parity$HD)
+summary(BA_NHANES_Parity$LOG_HD)
+cor(BA_NHANES_Parity$LOG_HD,BA_NHANES_Parity$Age, use="pairwise.complete.obs")
 ```
 
 #Exporting BA (only PhenoAge and HD)#
@@ -621,7 +623,7 @@ write.table(BA_NHANES_Parity,"E:/BA and Parity/Developing Aging Measures/BA_NHAN
 ```{r}
 
 #The "pregnant" variable is a dichotomous indicator of whether the participant is a pregnant female (1) or a non-pregnant female/male (2) 
-subset_age_nopreg <- subset(Reference_III_Win, Age>=30 & Age <=75 & Pregnant==2)
+subset_age_nopreg <- subset(ALL_DATA_Win, WAVE==10, Age>=30 & Age <=75 & Pregnant==2)
 
 #We'll need this further subsetted to men and women to calculate the model parameters for each individual biomarker (i.e. correlations, intercept, slope, error)
 subset_men <- subset(subset_age_nopreg, Gender==1)
@@ -631,11 +633,11 @@ subset_women <- subset(subset_age_nopreg, Gender==2)
 
 #If you add dummy variables to use in later regressions (e.g. NHANES Wave), those should be added in columns AFTER those holding all of the biomarkers.     
 
-subset_both <- dplyr::select(subset_age_nopreg,Age,Albumin,Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count)
+subset_both <- dplyr::select(subset_age_nopreg,Age,PHENO_Albumin,PHENO_Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count)
 
-subset_men <- dplyr::select(subset_men,Age,Albumin,Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count)
+subset_men <- dplyr::select(subset_men,Age,PHENO_Albumin,PHENO_Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count)
 
-subset_women <- dplyr::select(subset_women,Age,Albumin,Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count)
+subset_women <- dplyr::select(subset_women,Age,PHENO_Albumin,PHENO_Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count)
 ```
 
 **Calculating correlations and characteristic correlations (Rchar; Equation 4 in Levine 2013) for men and women**
@@ -733,14 +735,19 @@ SBA2_women
 **Creating subsets of the analysis sample for calculation of KDM Biological Age**
 
 ```{r}
-mydata_subset <- dplyr::select(Data_continuous,Age,Albumin,Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count,SEQN,Gender)
+mydata_subset <- dplyr::select(BA_NHANES_Parity,Age,PHENO_Albumin,PHENO_Creatinine,glucose,LOG_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,alkaline_phosphatase,White_Count,SEQN,Gender)
 mydata_men <- subset(mydata_subset,Gender==1)
 mydata_women <- subset(mydata_subset,Gender==2)
+
+#Creating empty dataframes with length the same as those for mydata_men/women but which will hold SEQN.
+hold <- dplyr::select(BA_NHANES_Parity,SEQN,Gender)
+hold_men <- subset(hold,Gender==1)
+hold_women <- subset(hold,Gender==2)
 ```
 
 **Calculating KDM Biological Age (Equation 3 in Levine 2013) for Men and Women in the Analysis Sample**
 
-IF INDIVIDUALS ARE MISSING ANY BIOMARKERS THEIR KDM WILL BE CODED AS NA.   
+NEED TO FIGURE OUT HOW TO LINK WITH SEQN.
 
 ```{r}
 #Replace 'mydata_men' with the name of your sample/analysis dataset, which should be filtered to only include men. Chronological age is assumed to be in the first column, followed by the biomarkers in an order consistent with all other steps.    
@@ -764,13 +771,12 @@ If your "mydata" files are already structured as a dataframe you could simply ad
 
 ```{r}
 KDM_men <- as.data.frame(KDM_men)
-KDM_men$Gender <-1
+hold_men$KDM <- KDM_men
 
 KDM_women <- as.data.frame(KDM_women)
-KDM_women$Gender <- 0
+hold_women$KDM <- KDM_women
 
-colnames(KDM_men) <- c("KDM","Gender")
-colnames(KDM_women) <- colnames(KDM_men)
-KDM_both <- dplyr::bind_rows(KDM_men,KDM_women)
+hold_both <- dplyr::bind_rows(hold_men,hold_women)
+BA_NHANES_Parity <- dplyr::full_join(BA_NHANES_Parity,hold_both,by="SEQN")
 ```
 
