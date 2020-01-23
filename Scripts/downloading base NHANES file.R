@@ -1,0 +1,232 @@
+#Download demo and covariate data 
+library(purrr)
+library(RNHANES)
+library(devtools)
+library(dplyr)
+
+#### Demographic files ####
+
+demo_a <- nhanes_load_data("DEMO", "1999-2000")
+demo_a_short <- demo_a[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+demo_b <- nhanes_load_data("DEMO", "2001-2002")
+demo_b_short <- demo_b[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+demo_c <- nhanes_load_data("DEMO", "2003-2004")
+demo_c_short <- demo_c[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+demo_d <- nhanes_load_data("DEMO", "2005-2006")
+demo_d_short <- demo_d[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+demo_e <- nhanes_load_data("DEMO", "2007-2008")
+demo_e_short <- demo_e[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+demo_f <- nhanes_load_data("DEMO", "2009-2010")
+demo_f_short <- demo_f[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+demo_g <- nhanes_load_data("DEMO", "2011-2012")
+demo_g_short <- demo_g[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+demo_h <- nhanes_load_data("DEMO", "2013-2014")
+demo_h_short <- demo_h[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+devtools::install_github("silentspringinstitute/RNHANES")
+demo_i <- nhanes_load_data("DEMO_I", "2015-2016")
+demo_i_short <- demo_i[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+
+DEMO <- rbind(demo_a_short,demo_b_short, demo_c_short, demo_d_short, demo_e_short, demo_f_short, demo_g_short, demo_h_short, demo_i_short)
+
+#### Smoking files ####
+smq_a <- nhanes_load_data("SMQ", "1999-2000", demographics = FALSE)
+smq_a_short <- smq_a[c("SMQ020", "SMQ040", "SEQN")]
+
+smq_b <- nhanes_load_data("SMQ", "2001-2002", demographics = FALSE)
+smq_b_short <- smq_b[c("SMQ020", "SMQ040", "SEQN")]
+
+smq_c <- nhanes_load_data("SMQ", "2003-2004", demographics = FALSE)
+smq_c_short <- smq_c[c("SMQ020", "SMQ040", "SEQN")]
+
+smq_d <- nhanes_load_data("SMQ", "2005-2006", demographics = FALSE)
+smq_d_short <- smq_d[c("SMQ020", "SMQ040", "SEQN")]
+
+smq_e <- nhanes_load_data("SMQ", "2007-2008", demographics = FALSE)
+smq_e_short <- smq_e[c("SMQ020", "SMQ040", "SEQN")]
+
+smq_f <- nhanes_load_data("SMQ", "2009-2010", demographics = FALSE)
+smq_f_short <- smq_f[c("SMQ020", "SMQ040", "SEQN")]
+
+smq_g <- nhanes_load_data("SMQ", "2011-2012", demographics = FALSE)
+smq_g_short <- smq_g[c("SMQ020", "SMQ040", "SEQN")]
+
+smq_h <- nhanes_load_data("SMQ", "2013-2014", demographics = FALSE)
+smq_h_short <- smq_h[c("SMQ020", "SMQ040", "SEQN")]
+
+smq_i <- nhanes_load_data("SMQ", "2015-2016", demographics = FALSE)
+smq_i_short <- smq_i[c("SMQ020", "SMQ040", "SEQN")]
+
+SMQ <- rbind(smq_a_short,smq_b_short, smq_c_short, smq_d_short, smq_e_short, smq_f_short, smq_g_short, smq_h_short, smq_i_short)
+
+SMQ$smoking <- 2 #current smoker
+SMQ$smoking[SMQ$SMQ020==2]<-0 #never smoker
+SMQ$smoking[SMQ$SMQ040==3]<-1 #past smoker
+
+#### BMI files ####
+bmx_a <- nhanes_load_data("BMX", "1999-2000", demographics = FALSE)
+bmx_a_short <- bmx_a[c("BMXBMI", "SEQN")]
+
+bmx_b <- nhanes_load_data("BMX", "2001-2002", demographics = FALSE)
+bmx_b_short <- bmx_b[c("BMXBMI", "SEQN")]
+
+bmx_c <- nhanes_load_data("BMX", "2003-2004", demographics = FALSE)
+bmx_c_short <- bmx_c[c("BMXBMI", "SEQN")]
+
+bmx_d <- nhanes_load_data("BMX", "2005-2006", demographics = FALSE)
+bmx_d_short <- bmx_d[c("BMXBMI", "SEQN")]
+
+bmx_e <- nhanes_load_data("BMX", "2007-2008", demographics = FALSE)
+bmx_e_short <- bmx_e[c("BMXBMI", "SEQN")]
+
+bmx_f <- nhanes_load_data("BMX", "2009-2010", demographics = FALSE)
+bmx_f_short <- bmx_f[c("BMXBMI", "SEQN")]
+
+bmx_g <- nhanes_load_data("BMX", "2011-2012", demographics = FALSE)
+bmx_g_short <- bmx_g[c("BMXBMI", "SEQN")]
+
+bmx_h <- nhanes_load_data("BMX", "2013-2014", demographics = FALSE)
+bmx_h_short <- bmx_h[c("BMXBMI", "SEQN")]
+
+bmx_i <- nhanes_load_data("BMX", "2015-2016", demographics = FALSE)
+bmx_i_short <- bmx_i[c("BMXBMI", "SEQN")]
+
+BMI <- rbind(bmx_a_short, bmx_b_short, bmx_c_short, bmx_d_short, bmx_e_short, bmx_f_short, bmx_g_short, bmx_h_short, bmx_i_short)
+
+#### Reproductive health questions #### 
+rhq_a <- nhanes_load_data("RHQ", "1999-2000", demographics = FALSE)
+rhq_a_short <- rhq_a[c("RHQ160", "RHD170", "RHQ030", "RHQ040", "SEQN", "RHD130")]
+colnames(rhq_a_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_a_short$menopause <- 0
+rhq_a_short$menopause[rhq_a_short$irregreason == 5] <- 0
+
+rhq_b <- nhanes_load_data("RHQ", "2001-2002", demographics = FALSE)
+rhq_b_short <- rhq_b[c("RHQ160", "RHD170", "RHQ030", "RHQ040", "SEQN", "RHD130")]
+colnames(rhq_b_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_b_short$menopause <- 0
+rhq_b_short$menopause[rhq_b_short$irregreason == 5] <- 1
+
+rhq_c <- nhanes_load_data("RHQ", "2003-2004", demographics = FALSE)
+rhq_c_short <- rhq_c[c("RHQ160", "RHD170", "RHQ031", "RHD042", "SEQN", "RHQ131")]
+colnames(rhq_c_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_c_short$menopause <- 0
+rhq_c_short$menopause[rhq_c_short$irregreason == 7] <- 1
+
+rhq_d <- nhanes_load_data("RHQ", "2005-2006", demographics = FALSE)
+rhq_d_short <- rhq_d[c("RHQ160", "RHQ171", "RHQ031", "RHD042", "SEQN", "RHQ131")]
+colnames(rhq_d_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_d_short$menopause <- 0
+rhq_d_short$menopause[rhq_d_short$irregreason == 7] <- 1
+
+rhq_e <- nhanes_load_data("RHQ", "2007-2008", demographics = FALSE)
+rhq_e_short <- rhq_e[c("RHQ160", "RHQ171", "RHQ031", "RHD042", "SEQN", "RHQ131")]
+colnames(rhq_e_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_e_short$menopause <- 0
+rhq_e_short$menopause[rhq_e_short$irregreason == 7] <- 1
+
+rhq_f <- nhanes_load_data("RHQ", "2009-2010", demographics = FALSE)
+rhq_f_short <- rhq_f[c("RHQ160", "RHQ171", "RHQ031", "RHD042", "SEQN", "RHQ131")]
+colnames(rhq_f_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_f_short$menopause <- 0
+rhq_f_short$menopause[rhq_f_short$irregreason == 7] <- 1
+
+rhq_g <- nhanes_load_data("RHQ", "2011-2012", demographics = FALSE)
+rhq_g_short <- rhq_g[c("RHQ160", "RHQ171", "RHQ031", "RHD042", "SEQN", "RHQ131")]
+colnames(rhq_g_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_g_short$menopause <- 0
+rhq_g_short$menopause[rhq_g_short$irregreason == 7] <- 1
+
+rhq_h <- nhanes_load_data("RHQ", "2013-2014", demographics = FALSE)
+rhq_h_short <- rhq_h[c("RHQ160", "RHQ171", "RHQ031", "RHD043", "SEQN", "RHQ131")]
+colnames(rhq_h_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_h_short$menopause <- 0
+rhq_h_short$menopause[rhq_h_short$irregreason == 7 | rhq_h_short$irregreason == 3] <- 1
+
+rhq_i <- nhanes_load_data("RHQ", "2015-2016", demographics = FALSE)
+rhq_i_short <- rhq_i[c("RHQ160", "RHQ171", "RHQ031", "RHD043", "SEQN", "RHQ131")]
+colnames(rhq_i_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
+rhq_i_short$menopause <- 0
+rhq_i_short$menopause[rhq_i_short$irregreason == 7 | rhq_i_short$irregreason == 3] <- 1
+
+RHQ <- rbind (rhq_a_short, rhq_b_short, rhq_c_short, rhq_d_short, rhq_e_short, rhq_f_short, rhq_g_short, rhq_h_short, rhq_i_short)
+
+RHQ$livebirths <- na_if(RHQ$livebirths, 77)
+RHQ$livebirths <- na_if(RHQ$livebirths, 99)
+
+RHQ$livebirths[RHQ$livebirths > 11] <- 11 # INTERPRETED AS 11 OR MORE because top-coded at 11 for some cycles
+
+##### Food security ###### NOT YET AVAILABLE FOR 15-16
+
+fsq_a <- nhanes_load_data("FSQ", "1999-2000", demographics = FALSE)
+fsq_a_short <- fsq_a[c("ADFDSEC", "SEQN")]
+colnames(fsq_a_short) <- c("foodsec", "SEQN")
+
+fsq_b <- nhanes_load_data("FSQ", "2001-2002", demographics = FALSE)
+fsq_b_short <- fsq_b[c("ADFDSEC", "SEQN")]
+colnames(fsq_b_short) <- c("foodsec", "SEQN")
+
+fsq_c <- nhanes_load_data("FSQ", "2003-2004", demographics = FALSE)
+fsq_c_short <- fsq_c[c("FSDAD", "SEQN")]
+colnames(fsq_c_short) <- c("foodsec", "SEQN")
+
+fsq_d <- nhanes_load_data("FSQ", "2005-2006", demographics = FALSE)
+fsq_d_short <- fsq_d[c("FSDAD", "SEQN")]
+colnames(fsq_d_short) <- c("foodsec", "SEQN")
+
+fsq_e <- nhanes_load_data("FSQ", "2007-2008", demographics = FALSE)
+fsq_e_short <- fsq_e[c("FSDAD", "SEQN")]
+colnames(fsq_e_short) <- c("foodsec", "SEQN")
+
+fsq_f <- nhanes_load_data("FSQ", "2009-2010", demographics = FALSE)
+fsq_f_short <- fsq_f[c("FSDAD", "SEQN")]
+colnames(fsq_f_short) <- c("foodsec", "SEQN")
+
+fsq_g <- nhanes_load_data("FSQ", "2011-2012", demographics = FALSE)
+fsq_g_short <- fsq_g[c("FSDAD", "SEQN")]
+colnames(fsq_g_short) <- c("foodsec", "SEQN")
+
+fsq_h <- nhanes_load_data("FSQ", "2013-2014", demographics = FALSE)
+fsq_h_short <- fsq_h[c("FSDAD", "SEQN")]
+colnames(fsq_h_short) <- c("foodsec", "SEQN")
+
+#fsq_i <- nhanes_load_data("FSQ", "2015-2016", demographics = FALSE)
+#fsq_i_short <- fsq_i[c("FSDAD", "SEQN")]
+
+#FSQ <- rbind(fsq_a_short,fsq_b_short, fsq_c_short, fsq_d_short, fsq_e_short, fsq_f_short, fsq_g_short, fsq_h_short, fsq_i_short)
+FSQ <- rbind(fsq_a_short,fsq_b_short, fsq_c_short, fsq_d_short, fsq_e_short, fsq_f_short, fsq_g_short, fsq_h_short)
+
+##### Merge all ####
+
+NHANES <- merge(DEMO, RHQ, by = "SEQN", all = TRUE)
+NHANES <- merge (NHANES, SMQ, by = "SEQN", all = TRUE)
+NHANES <- merge (NHANES, BMI, by = "SEQN", all = TRUE)
+NHANES <- merge (NHANES, FSQ, by = "SEQN", all = TRUE)
+
+##### Recoding ####
+
+NHANES$everpreg <- na_if (NHANES$everpreg, 7)
+NHANES$everpreg <- na_if (NHANES$everpreg, 9)
+
+NHANES$DMDEDUC2 <- na_if (NHANES$DMDEDUC2, 7)
+NHANES$DMDEDUC2 <- na_if (NHANES$DMDEDUC2, 9)
+
+NHANES$menopause[NHANES$RIDAGEYR > 61 & NHANES$RIAGENDR == 2] <- 1
+NHANES$menopause[NHANES$RIDAGEYR < 41 & NHANES$RIAGENDR == 2] <- 0
+
+NHANES$livebirths[NHANES$everpreg == 2] <- 0
+NHANES$livebirths_dichot[NHANES$livebirths == 0] <- 0
+NHANES$livebirths_dichot[NHANES$livebirths > 0] <- 1
+
+NHANES$RIDRETH1[NHANES$RIDRETH1 == 3] <- 0 #NH white
+NHANES$RIDRETH1[NHANES$RIDRETH1 == 1 | NHANES$RIDRETH1 == 2 ] <-1 #hispanic
+NHANES$RIDRETH1[NHANES$RIDRETH1 == 2] <- 0 #NH black
+NHANES$RIDRETH1[NHANES$RIDRETH1 == 5] <- 3 #other
+
+write.csv (NHANES, "NHANES_120319")

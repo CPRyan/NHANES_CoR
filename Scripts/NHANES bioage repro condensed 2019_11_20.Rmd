@@ -23,6 +23,12 @@ library(ggstance)
 library(corrplot)
 library(GGally)
 library(stargazer)
+
+# install.packages(here) # Run this if you don't have here package. See below for how it works. 
+
+library(here)
+library(jtools)
+
 ```
 
 ##Download data, merge stuff, & do some transformations
@@ -113,7 +119,7 @@ NHANES$livebirths2 <- NHANES$livebirths^2
 NHANES$everpreg[NHANES$everpreg==2]<-0
 
 #Download biological age file
-NHANES_BA_Talia <- read_sav(file.choose())
+NHANES_BA_Talia <- read_sav(here::here("Data/NHANES_BA_Talia.sav"))
 colnames(NHANES_BA_Talia)[1] <- "SEQN"
 
 #Combine all data
@@ -148,15 +154,47 @@ nhanesDesign2<- subset(base, age > 17 & age <=84 & pregnant != 1 & livebirths > 
 
 ##Most important model (all covariates, no interactions): Premenopausal, # live births
 ```{r message=FALSE, echo=T, results='hide'}
+summary(a1_linear <- svyglm(HD ~ livebirths + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+summary(a2_linear <- svyglm(LM ~ livebirths + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+summary(a3_linear <- svyglm(KDM ~ livebirths + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))      
+summary(a4_linear <- svyglm(log_telo ~ livebirths+ age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+
+
 summary(a1 <- svyglm(HD ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
 summary(a2 <- svyglm(LM ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
 summary(a3 <- svyglm(KDM ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))      
 summary(a4 <- svyglm(log_telo ~ livebirths + livebirths2 + age + bmi + smoking + education + poverty + ridreth1 + food_security, design = nhanesDesign1))
+
+
+anova(a1, a1_linear, test = "Chisq")
+anova(a2, a2_linear, test = "Chisq")
+anova(a3, a3_linear, test = "Chisq")
+# Either the quadratic outperforms (a1 < 0.1, a2 <0.05) or is  non-significantly different. Logic for quadratic. 
+
 ```
 
 ##Tables for premenopausal women, # live births
 ```{r, results = 'asis', echo = FALSE}
-stargazer(a1,a2,a3,a4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+stargazer(a1,a2,a3,a4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "../Output/Tables/models_pre_meno.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+```
+
+
+##Figures of curves (GARBAGE)
+```{r, results = 'asis', echo = FALSE}
+# make_predictions() # can't figure it out.
+# ggpredict() # can't figure it out.
+
+
+# IS this it? 
+df %>% 
+  filter(age > 17 & age <=84 & pregnant != 1 & livebirths > -1 & menopause == 0) %>% 
+ggplot(., aes(x = livebirths, y = LM)) +
+  geom_jitter(alpha = 0.4, col = "navy", width = 0.2)+
+  geom_smooth(method = "glm", formula =  y ~ x + I(x^2), n = 500)+
+  theme_bw()
+
+
+
 ```
 
 ##Most important model (all covariates, no interactions): Postmenopausal, # live births
@@ -169,8 +207,37 @@ summary(b4 <- svyglm(log_telo ~ livebirths + livebirths2 + age + bmi + smoking +
 
 ##Tables for postmenopausal women, # live births
 ```{r, results = 'asis', echo = FALSE}
-stargazer(b1,b2,b3,b4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+stargazer(b1,b2,b3, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "../Output/Tables/models_post_meno.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
 ```
+
+
+
+
+## All Biological Aging Table
+```{r}
+stargazer(a1,a2,a3,b1,b2,b3, 
+          single.row = F, 
+          align = T, 
+          intercept.bottom = T, 
+          no.space = T, 
+          dep.var.caption = "Biological Aging (BA) Measures",
+          dep.var.labels = c("", "Pre-menopausal", "", "", "Post-menopausal", ""),
+          column.labels = c("HD", "LM", "KDM", "HD", "LM", "KDM"),
+          covariate.labels = c("Births", "Births2", "Age",
+                               "BMI", "Smoking (Y/N)", "Education",
+                               "Poverty", "RIDRETH", "Food Security", "Intercept"),
+          type = "html", 
+          out = "../Output/Tables/models_all_meno.html", 
+          report = "vc*",   
+          star.char = c("+", "*", "**", "***"), 
+          digits = 3, 
+          notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", 
+          notes.append = FALSE)
+
+```
+
+
+
 
 ##Plots, # live births (model 1 = premenopausal, model 2 = postmenopausal)
 ```{r message=FALSE, echo=FALSE}
@@ -235,7 +302,7 @@ summary(c4 <- svyglm(log_telo ~ everpreg + age + bmi + smoking + education + pov
 
 ##Tables for premenopausal women, ever pregnant
 ```{r, results = 'asis', echo = FALSE}
-stargazer(c1,c2,c3,c4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+stargazer(c1,c2,c3,c4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "../Output/Tables/models_ever_pre-meno.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
 ```
 
 ##Most important model (all covariates, no interactions): Postmenopausal, ever pregnant
@@ -248,8 +315,38 @@ summary(d4 <- svyglm(log_telo ~ everpreg + age + bmi + smoking + education + pov
 
 ##Tables for postmenopausal women, ever pregnant
 ```{r, results = 'asis', echo = FALSE}
-stargazer(d1,d2,d3,d4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "models.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
+stargazer(d1,d2,d3,d4, single.row = F, align = T, intercept.bottom = T, no.space = T, dep.var.caption = "", type = "html", out = "../Output/Tables/models_ever_post-meno.html", report = "vc*",   star.char = c("+", "*", "**", "***"), digits = 3, notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", notes.append = FALSE)
 ```
+
+
+```{r}
+stargazer(c1,c2,c3,d1,d2,d3, 
+          single.row = F, 
+          align = T, 
+          intercept.bottom = T, 
+          no.space = T, 
+          dep.var.caption = "Biological Aging (BA) Measures",
+          dep.var.labels = c("", "Pre-menopausal", "", "", "Post-menopausal", ""),
+          column.labels = c("HD", "LM", "KDM", "HD", "LM", "KDM"),
+          covariate.labels = c("Births", "Births2", "Age",
+                               "BMI", "Smoking (Y/N)", "Education",
+                               "Poverty", "RIDRETH", "Food Security", "Intercept"),
+          type = "html", 
+          out = "../Output/Tables/models_ever_all-meno.html", 
+          report = "vc*",   
+          star.char = c("+", "*", "**", "***"), 
+          digits = 3, 
+          notes = "+p<0.1;*p<0.05;**p<0.01;***p<0.001 ", 
+          notes.append = FALSE)
+
+```
+
+
+
+
+
+
+
 
 ##Plots, ever pregnant (model 1 = premenopausal, model 2 = postmenopausal)
 ```{r message=FALSE, echo=FALSE}
