@@ -50,7 +50,7 @@ df$LM_acceleration <- df$LM-df$RIDAGEYR
 df$KDM_acceleration <- df$KDM-df$RIDAGEYR
 
 #Make HD resid variable
-lm1 <- lm(HD~RIDAGEYR, data = df)
+lm1 <- lm(LOG_HD~RIDAGEYR, data = df)
 resids <- broom::augment(lm1)[,c(1,6)]
 colnames(resids)[colnames(resids)==".rownames"] <- "SEQN"
 df <- merge (df, resids, by = "SEQN", all = TRUE)
@@ -71,20 +71,20 @@ nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & liv
 
 #### Primary analyses -- all covariates 
 summary(LM1 <- svyglm(LM ~ livebirths + livebirths2 + livebirths:menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
-summary(HD1 <- svyglm(HD ~ livebirths + livebirths2 + livebirths:menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
+summary(HD1 <- svyglm(LOG_HD ~ livebirths + livebirths2 + livebirths:menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
 summary(KDM1 <- svyglm(KDM ~ livebirths + livebirths2 + livebirths:menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
 
 summary(LM2 <- svyglm(LM ~ livebirths_dichot + livebirths_dichot:menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
-summary(HD2 <- svyglm(HD ~ livebirths_dichot + livebirths_dichot:menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
+summary(HD2 <- svyglm(LOG_HD ~ livebirths_dichot + livebirths_dichot:menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
 summary(KDM2 <- svyglm(KDM ~ livebirths_dichot + livebirths_dichot:menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
 
 #### Secondary analyses -- age covariate only
 summary(LM3 <- svyglm(LM ~ livebirths + livebirths2 + livebirths:menopause + RIDAGEYR, design = nhanesDesign1, data = df))
-summary(HD3 <- svyglm(HD ~ livebirths + livebirths2 + livebirths:menopause + RIDAGEYR, design = nhanesDesign1, data = df))
+summary(HD3 <- svyglm(LOG_HD ~ livebirths + livebirths2 + livebirths:menopause + RIDAGEYR, design = nhanesDesign1, data = df))
 summary(KDM3 <- svyglm(KDM ~ livebirths + livebirths2 + livebirths:menopause + RIDAGEYR, design = nhanesDesign1, data = df))
 
 summary(LM4 <- svyglm(LM ~ livebirths_dichot + livebirths_dichot:menopause + RIDAGEYR, design = nhanesDesign1, data = df))
-summary(HD4 <- svyglm(HD ~ livebirths_dichot + livebirths_dichot:menopause + RIDAGEYR, design = nhanesDesign1, data = df))
+summary(HD4 <- svyglm(LOG_HD ~ livebirths_dichot + livebirths_dichot:menopause + RIDAGEYR, design = nhanesDesign1, data = df))
 summary(KDM4 <- svyglm(KDM ~ livebirths_dichot + livebirths_dichot:menopause + RIDAGEYR, design = nhanesDesign1, data = df))
 
 
