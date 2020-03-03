@@ -70,42 +70,12 @@ SMQ$smoking <- 2 #current smoker
 SMQ$smoking[SMQ$SMQ020==2]<-0 #never smoker
 SMQ$smoking[SMQ$SMQ040==3]<-1 #past smoker
 
-#### BMI files ####
-bmx_a <- nhanes_load_data("BMX", "1999-2000", demographics = FALSE)
-bmx_a_short <- bmx_a[c("BMXBMI", "SEQN")]
-
-bmx_b <- nhanes_load_data("BMX", "2001-2002", demographics = FALSE)
-bmx_b_short <- bmx_b[c("BMXBMI", "SEQN")]
-
-bmx_c <- nhanes_load_data("BMX", "2003-2004", demographics = FALSE)
-bmx_c_short <- bmx_c[c("BMXBMI", "SEQN")]
-
-bmx_d <- nhanes_load_data("BMX", "2005-2006", demographics = FALSE)
-bmx_d_short <- bmx_d[c("BMXBMI", "SEQN")]
-
-bmx_e <- nhanes_load_data("BMX", "2007-2008", demographics = FALSE)
-bmx_e_short <- bmx_e[c("BMXBMI", "SEQN")]
-
-bmx_f <- nhanes_load_data("BMX", "2009-2010", demographics = FALSE)
-bmx_f_short <- bmx_f[c("BMXBMI", "SEQN")]
-
-bmx_g <- nhanes_load_data("BMX", "2011-2012", demographics = FALSE)
-bmx_g_short <- bmx_g[c("BMXBMI", "SEQN")]
-
-bmx_h <- nhanes_load_data("BMX", "2013-2014", demographics = FALSE)
-bmx_h_short <- bmx_h[c("BMXBMI", "SEQN")]
-
-bmx_i <- nhanes_load_data("BMX", "2015-2016", demographics = FALSE)
-bmx_i_short <- bmx_i[c("BMXBMI", "SEQN")]
-
-BMI <- rbind(bmx_a_short, bmx_b_short, bmx_c_short, bmx_d_short, bmx_e_short, bmx_f_short, bmx_g_short, bmx_h_short, bmx_i_short)
-
 #### Reproductive health questions #### 
 rhq_a <- nhanes_load_data("RHQ", "1999-2000", demographics = FALSE)
 rhq_a_short <- rhq_a[c("RHQ160", "RHD170", "RHQ030", "RHQ040", "SEQN", "RHD130")]
 colnames(rhq_a_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg")
 rhq_a_short$menopause <- 0
-rhq_a_short$menopause[rhq_a_short$irregreason == 5] <- 0
+rhq_a_short$menopause[rhq_a_short$irregreason == 5] <- 1
 
 rhq_b <- nhanes_load_data("RHQ", "2001-2002", demographics = FALSE)
 rhq_b_short <- rhq_b[c("RHQ160", "RHD170", "RHQ030", "RHQ040", "SEQN", "RHD130")]
@@ -159,55 +129,15 @@ RHQ <- rbind (rhq_a_short, rhq_b_short, rhq_c_short, rhq_d_short, rhq_e_short, r
 
 RHQ$livebirths <- na_if(RHQ$livebirths, 77)
 RHQ$livebirths <- na_if(RHQ$livebirths, 99)
+RHQ$mensregularity <- na_if(RHQ$mensregularity, 7)
+RHQ$mensregularity <- na_if(RHQ$mensregularity, 9)
 
 RHQ$livebirths[RHQ$livebirths > 11] <- 11 # INTERPRETED AS 11 OR MORE because top-coded at 11 for some cycles
-
-##### Food security ###### NOT YET AVAILABLE FOR 15-16
-
-fsq_a <- nhanes_load_data("FSQ", "1999-2000", demographics = FALSE)
-fsq_a_short <- fsq_a[c("ADFDSEC", "SEQN")]
-colnames(fsq_a_short) <- c("foodsec", "SEQN")
-
-fsq_b <- nhanes_load_data("FSQ", "2001-2002", demographics = FALSE)
-fsq_b_short <- fsq_b[c("ADFDSEC", "SEQN")]
-colnames(fsq_b_short) <- c("foodsec", "SEQN")
-
-fsq_c <- nhanes_load_data("FSQ", "2003-2004", demographics = FALSE)
-fsq_c_short <- fsq_c[c("FSDAD", "SEQN")]
-colnames(fsq_c_short) <- c("foodsec", "SEQN")
-
-fsq_d <- nhanes_load_data("FSQ", "2005-2006", demographics = FALSE)
-fsq_d_short <- fsq_d[c("FSDAD", "SEQN")]
-colnames(fsq_d_short) <- c("foodsec", "SEQN")
-
-fsq_e <- nhanes_load_data("FSQ", "2007-2008", demographics = FALSE)
-fsq_e_short <- fsq_e[c("FSDAD", "SEQN")]
-colnames(fsq_e_short) <- c("foodsec", "SEQN")
-
-fsq_f <- nhanes_load_data("FSQ", "2009-2010", demographics = FALSE)
-fsq_f_short <- fsq_f[c("FSDAD", "SEQN")]
-colnames(fsq_f_short) <- c("foodsec", "SEQN")
-
-fsq_g <- nhanes_load_data("FSQ", "2011-2012", demographics = FALSE)
-fsq_g_short <- fsq_g[c("FSDAD", "SEQN")]
-colnames(fsq_g_short) <- c("foodsec", "SEQN")
-
-fsq_h <- nhanes_load_data("FSQ", "2013-2014", demographics = FALSE)
-fsq_h_short <- fsq_h[c("FSDAD", "SEQN")]
-colnames(fsq_h_short) <- c("foodsec", "SEQN")
-
-#fsq_i <- nhanes_load_data("FSQ", "2015-2016", demographics = FALSE)
-#fsq_i_short <- fsq_i[c("FSDAD", "SEQN")]
-
-#FSQ <- rbind(fsq_a_short,fsq_b_short, fsq_c_short, fsq_d_short, fsq_e_short, fsq_f_short, fsq_g_short, fsq_h_short, fsq_i_short)
-FSQ <- rbind(fsq_a_short,fsq_b_short, fsq_c_short, fsq_d_short, fsq_e_short, fsq_f_short, fsq_g_short, fsq_h_short)
 
 ##### Merge all ####
 
 NHANES <- merge(DEMO, RHQ, by = "SEQN", all = TRUE)
 NHANES <- merge (NHANES, SMQ, by = "SEQN", all = TRUE)
-NHANES <- merge (NHANES, BMI, by = "SEQN", all = TRUE)
-NHANES <- merge (NHANES, FSQ, by = "SEQN", all = TRUE)
 
 ##### Recoding ####
 
@@ -226,7 +156,7 @@ NHANES$livebirths_dichot[NHANES$livebirths > 0] <- 1
 
 NHANES$RIDRETH1[NHANES$RIDRETH1 == 3] <- 0 #NH white
 NHANES$RIDRETH1[NHANES$RIDRETH1 == 1 | NHANES$RIDRETH1 == 2 ] <-1 #hispanic
-NHANES$RIDRETH1[NHANES$RIDRETH1 == 2] <- 0 #NH black
+NHANES$RIDRETH1[NHANES$RIDRETH1 == 4] <- 2 #NH black
 NHANES$RIDRETH1[NHANES$RIDRETH1 == 5] <- 3 #other
 
-write.csv (NHANES, "NHANES_120319")
+write.csv (NHANES, "NHANES_030220")
