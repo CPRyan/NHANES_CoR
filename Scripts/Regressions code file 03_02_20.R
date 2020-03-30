@@ -57,7 +57,7 @@ df <- merge (df, resids, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)==".resid"] <- "HD_age_resid"
 
 #write to .dta
-#write.dta(df, "NHANES_repro_file_030320.dta")
+#write.dta(df, "NHANES_repro_file_030420.dta")
 
 #Set survey specs
 
