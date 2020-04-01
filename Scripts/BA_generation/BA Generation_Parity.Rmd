@@ -332,40 +332,51 @@ ALL_DATA <- dplyr::bind_rows(Data_continuous,Reference_III)
 ```
 
 
-
 #Checking skewness and kurtosis & Windsorizing Data#
+Changing approach to winsorize the reference and analytical dataset independently. Also winsorizing independently with sex within dataset.  
 
 ```{r}
 library(moments)
 library(DescTools)
 
 #Winsorizing outliers in reference dataset 
-skewness(Reference_III,na.rm=TRUE)
-kurtosis(Reference_III,na.rm=TRUE)
+Reference_III_men <- subset(Reference_III, Gender==1)
+Reference_III_women <-subset(Reference_III, Gender==2)
 
-Reference_Win <- dplyr::select(Reference_III,SEQN,CRP:PHENO_Glucose)
-Reference_Win <- lapply(Reference_Win,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
-Reference_Win <- as.data.frame(Reference_Win)
-Reference_Win <- dplyr::select(Reference_Win,CRP:PHENO_Glucose)
-Temp <- dplyr::select(Reference_III,SEQN,WAVE,Age,Gender,Pregnant,BMI)
-Reference_Win <- dplyr::bind_cols(Temp,Reference_Win)
-summary(Reference_Win)
-skewness(Reference_Win,na.rm=TRUE)
-kurtosis(Reference_Win,na.rm=TRUE)
+
+Reference_Win_men <- dplyr::select(Reference_III_men,SEQN,CRP:PHENO_Glucose)
+Reference_Win_men <- lapply(Reference_Win_men,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
+Reference_Win_men <- as.data.frame(Reference_Win_men)
+Reference_Win_men <- dplyr::select(Reference_Win_men,CRP:PHENO_Glucose)
+Temp <- dplyr::select(Reference_III_men,SEQN,WAVE,Age,Gender,Pregnant,BMI)
+Reference_Win_men <- dplyr::bind_cols(Temp,Reference_Win_men)
+
+
+Reference_Win_women <- dplyr::select(Reference_III_women,SEQN,CRP:PHENO_Glucose)
+Reference_Win_women <- lapply(Reference_Win_women,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
+Reference_Win_women <- as.data.frame(Reference_Win_women)
+Reference_Win_women <- dplyr::select(Reference_Win_women,CRP:PHENO_Glucose)
+Temp <- dplyr::select(Reference_III_women,SEQN,WAVE,Age,Gender,Pregnant,BMI)
+Reference_Win_women <- dplyr::bind_cols(Temp,Reference_Win_women)
 
 #Winsorizing outliers in analytical dataset 
-skewness(Data_continuous,na.rm=TRUE)
-kurtosis(Data_continuous,na.rm=TRUE)
+Analysis_men <- subset(Data_continuous,Gender==1)
+Analysis_women <- subset(Data_continuous,Gender==2)
 
-Analysis_Win <- dplyr::select(Data_continuous,SEQN,CRP:PHENO_Glucose)
-Analysis_Win <- lapply(Analysis_Win,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
-Analysis_Win <- as.data.frame(Analysis_Win)
-Analysis_Win <- dplyr::select(Analysis_Win,CRP:PHENO_Glucose)
-Temp <- dplyr::select(Data_continuous,SEQN,WAVE,Age,Gender,Pregnant,BMI)
-Analysis_Win <- dplyr::bind_cols(Temp,Analysis_Win)
-summary(Analysis_Win)
-skewness(Analysis_Win,na.rm=TRUE)
-kurtosis(Analysis_Win,na.rm=TRUE)
+Analysis_Win_men <- dplyr::select(Analysis_men,SEQN,CRP:PHENO_Glucose)
+Analysis_Win_men <- lapply(Analysis_Win_men,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
+Analysis_Win_men <- as.data.frame(Analysis_Win_men)
+Analysis_Win_men <- dplyr::select(Analysis_Win_men,CRP:PHENO_Glucose)
+Temp <- dplyr::select(Analysis_men,SEQN,WAVE,Age,Gender,Pregnant,BMI)
+Analysis_Win_men <- dplyr::bind_cols(Temp,Analysis_Win_men)
+
+
+Analysis_Win_women <- dplyr::select(Analysis_women,SEQN,CRP:PHENO_Glucose)
+Analysis_Win_women <- lapply(Analysis_Win_women,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
+Analysis_Win_women <- as.data.frame(Analysis_Win_women)
+Analysis_Win_women <- dplyr::select(Analysis_Win_women,CRP:PHENO_Glucose)
+Temp <- dplyr::select(Analysis_women,SEQN,WAVE,Age,Gender,Pregnant,BMI)
+Analysis_Win_women <- dplyr::bind_cols(Temp,Analysis_Win_women)
 ```
 
 
@@ -377,7 +388,7 @@ For now this only includes NHANES panels through 2010.
 
 ```{r}
 #Subsetting data
-BA_NHANES_Parity <- dplyr::select(Analysis_Win,SEQN,WAVE,Age,Gender,Pregnant,BMI,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
+BA_NHANES_Parity <- dplyr::select(Analysis_Win_women,SEQN,WAVE,Age,Gender,Pregnant,BMI,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
 BA_NHANES_Parity <- subset(BA_NHANES_Parity,Pregnant==2 & Age<=84)
 
 BA_NHANES_Parity <- BA_NHANES_Parity[complete.cases(BA_NHANES_Parity),]
@@ -410,9 +421,9 @@ Using cutoffs in the original units provided by Mayo instead of converting them.
 
 ```{r}
 #Reference dataframes by sex 
-Reference_HD_women <- subset(Reference_Win, Gender==2 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & Albumin>=35 & Albumin<=50 & Creatinine>=0.59 & Creatinine<=1.04 & glucose<126 & CRP<3 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=78.2 & MCV<=97.9 & Red_Cell_Width>=12.2 & Red_Cell_Width<=16.1 & Alkaline_Phosphatase>=35 & Alkaline_Phosphatase<=104 & White_Count>=3.4 & White_Count<=9.6)
+Reference_HD_women <- subset(Reference_Win_women, Gender==2 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & Albumin>=35 & Albumin<=50 & Creatinine>=0.59 & Creatinine<=1.04 & glucose<126 & CRP<3 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=78.2 & MCV<=97.9 & Red_Cell_Width>=12.2 & Red_Cell_Width<=16.1 & Alkaline_Phosphatase>=35 & Alkaline_Phosphatase<=104 & White_Count>=3.4 & White_Count<=9.6)
 
-Reference_HD_men <- subset(Reference_Win, Gender==1 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & Albumin>=35 & Albumin<=50 & Creatinine>=0.74 & Creatinine<=1.35 & glucose<126 & CRP<3 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=78.2 & MCV<=97.9 & Red_Cell_Width>=11.8 & Red_Cell_Width<=14.5 & Alkaline_Phosphatase>=45 & Alkaline_Phosphatase<=109 & White_Count>=3.4 & White_Count<=9.6)
+Reference_HD_men <- subset(Reference_Win_men, Gender==1 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & Albumin>=35 & Albumin<=50 & Creatinine>=0.74 & Creatinine<=1.35 & glucose<126 & CRP<3 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=78.2 & MCV<=97.9 & Red_Cell_Width>=11.8 & Red_Cell_Width<=14.5 & Alkaline_Phosphatase>=45 & Alkaline_Phosphatase<=109 & White_Count>=3.4 & White_Count<=9.6)
 
 dim(Reference_HD_women)
 dim(Reference_HD_men)
@@ -448,31 +459,28 @@ S_inv_men <- solve(S_men)
 
 ```{r}
 BA_HD_Calc_women <- subset(BA_NHANES_Parity,Gender==2)
-BA_HD_Calc_men <- subset(BA_NHANES_Parity,Gender==1)
+# BA_HD_Calc_men <- subset(BA_NHANES_Parity,Gender==1)
 
 BA_HD_Calc2_women <- dplyr::select(BA_HD_Calc_women,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
 BA_HD_Calc2_women <- BA_HD_Calc2_women[complete.cases(BA_HD_Calc2_women),]
 
-BA_HD_Calc2_men <- dplyr::select(BA_HD_Calc_men,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
-BA_HD_Calc2_men <- BA_HD_Calc2_men[complete.cases(BA_HD_Calc2_men),]
+# BA_HD_Calc2_men <- dplyr::select(BA_HD_Calc_men,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
+# BA_HD_Calc2_men <- BA_HD_Calc2_men[complete.cases(BA_HD_Calc2_men),]
 
 library(stats)
 #Calculated squared mahalanobis distance
 BA_HD_Calc_women$HDsquare <- mahalanobis(BA_HD_Calc2_women,HD_mu_women,S_inv_women,inverted=FALSE)
-BA_HD_Calc_men$HDsquare <- mahalanobis(BA_HD_Calc2_men,HD_mu_men,S_inv_men,inverted=FALSE)
+# BA_HD_Calc_men$HDsquare <- mahalanobis(BA_HD_Calc2_men,HD_mu_men,S_inv_men,inverted=FALSE)
 #Square root is HD 
 BA_HD_Calc_women$HD <- sqrt(BA_HD_Calc_women$HDsquare)
-BA_HD_Calc_men$HD <- sqrt(BA_HD_Calc_men$HDsquare)
-summary(BA_HD_Calc_women$HDsquare)
-summary(BA_HD_Calc_women$HD)
-summary(BA_HD_Calc_men$HDsquare)
-summary(BA_HD_Calc_men$HD)
+# BA_HD_Calc_men$HD <- sqrt(BA_HD_Calc_men$HDsquare)
+
 
 BA_HD_women <- dplyr::select(BA_HD_Calc_women,SEQN,HD)
-BA_HD_men <- dplyr::select(BA_HD_Calc_men,SEQN,HD)
-BA_HD <- dplyr::bind_rows(BA_HD_women,BA_HD_men)
+# BA_HD_men <- dplyr::select(BA_HD_Calc_men,SEQN,HD)
+# BA_HD <- dplyr::bind_rows(BA_HD_women,BA_HD_men)
 
-BA_NHANES_Parity <- dplyr::full_join(BA_NHANES_Parity,BA_HD,by="SEQN")
+BA_NHANES_Parity <- dplyr::full_join(BA_NHANES_Parity,BA_HD_women,by="SEQN")
 BA_NHANES_Parity$LOG_HD <- log(BA_NHANES_Parity$HD)
 summary(BA_NHANES_Parity$LOG_HD)
 cor(BA_NHANES_Parity$LOG_HD,BA_NHANES_Parity$Age, use="pairwise.complete.obs")
@@ -484,19 +492,17 @@ cor(BA_NHANES_Parity$LOG_HD,BA_NHANES_Parity$Age, use="pairwise.complete.obs")
 
 ```{r}
 #The "pregnant" variable is a dichotomous indicator of whether the participant is a pregnant female (1) or a non-pregnant female/male (2) 
-subset_age_nopreg <- subset(Reference_Win, Age>=30 & Age <=75 & Pregnant==2)
+subset_age_nopreg <- subset(Reference_Win_women, Age>=30 & Age <=75 & Pregnant==2)
 
 #We'll need this further subsetted to men and women to calculate the model parameters for each individual biomarker (i.e. correlations, intercept, slope, error)
-subset_men <- subset(subset_age_nopreg, Gender==1)
+# subset_men <- subset(subset_age_nopreg, Gender==1)
 subset_women <- subset(subset_age_nopreg, Gender==2)
 
 #Replace the biomarkers listed here with the variable names of the biomarkers in your panel. Any transformations (e.g. log) should be done prior to this step. CHRONOLOGICAL AGE NEEDS TO BE THE FIRST VARIABLE. 
 
 #If you add dummy variables to use in later regressions (e.g. NHANES Wave), those should be added in columns AFTER those holding all of the biomarkers.     
 
-subset_both <- dplyr::select(subset_age_nopreg,Age,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
-
-subset_men <- dplyr::select(subset_men,Age,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
+# subset_men <- dplyr::select(subset_men,Age,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
 
 subset_women <- dplyr::select(subset_women,Age,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
 ```
@@ -505,11 +511,11 @@ subset_women <- dplyr::select(subset_women,Age,Albumin,PHENO_Creatinine,PHENO_Gl
 
 ```{r}
 
-correlations_men <-list()
-for(i in 2:ncol(subset_men)) {
-  correlations_men[[i]] <- cor(subset_men[,1],subset_men[,i],use="pairwise.complete.obs")
-}
-correlations_men <- unlist(correlations_men)
+# correlations_men <-list()
+# for(i in 2:ncol(subset_men)) {
+#  correlations_men[[i]] <- cor(subset_men[,1],subset_men[,i],use="pairwise.complete.obs")
+# }
+# correlations_men <- unlist(correlations_men)
 
 
 correlations_women <-list()
@@ -520,11 +526,11 @@ correlations_women <- unlist(correlations_women)
 
 #Change j to match the number of biomarkers in your panel. For example a 10 biomarker panel would have j <- 1:10.
 j <- 1:9
-Rchar_men <- (sum((correlations_men[j]^2)/(sqrt(1-(correlations_men[j])^2))))/(sum((correlations_men[j])/(sqrt(1-(correlations_men[j])^2))))
+# Rchar_men <- (sum((correlations_men[j]^2)/(sqrt(1-(correlations_men[j])^2))))/(sum((correlations_men[j])/(sqrt(1-(correlations_men[j])^2))))
 
 Rchar_women <- (sum((correlations_women[j]^2)/(sqrt(1-(correlations_women[j])^2))))/(sum((correlations_women[j])/(sqrt(1-(correlations_women[j])^2))))
 
-Rchar_men
+# Rchar_men
 Rchar_women
 ```
 
@@ -533,15 +539,15 @@ DOES NOT INCLUDE DUMMY CODING FOR NHANES WAVES! These factors can be added to th
 
 ```{r}
 #Replace the number of rows here with the number of biomarkers you are using. For example a 10 biomarker panel would have "nrow=10"
-parameters_men <- matrix(nrow=9,ncol=3)
-colnames(parameters_men) <- c("Intercept","Slope","RMSE")
-hold <- list()
-for(i in 2:ncol(subset_men)) {
-  hold[[i]] <- lm(subset_men[,i]~subset_men$Age)
-  parameters_men[[i-1,1]] <- hold[[i]]$coefficients[1]
-  parameters_men[[i-1,2]] <- hold[[i]]$coefficients[2]
-  parameters_men[[i-1,3]] <- sqrt((c(crossprod(hold[[i]]$residuals)))/(length(hold[[i]]$residuals)))
-}
+# parameters_men <- matrix(nrow=9,ncol=3)
+# colnames(parameters_men) <- c("Intercept","Slope","RMSE")
+# hold <- list()
+# for(i in 2:ncol(subset_men)) {
+#  hold[[i]] <- lm(subset_men[,i]~subset_men$Age)
+#  parameters_men[[i-1,1]] <- hold[[i]]$coefficients[1]
+#  parameters_men[[i-1,2]] <- hold[[i]]$coefficients[2]
+#  parameters_men[[i-1,3]] <- sqrt((c(crossprod(hold[[i]]$residuals)))/(length(hold[[i]]$residuals)))
+# }
 
 #Replace the number of rows here with the number of biomarkers you are using 
 parameters_women <- matrix(nrow=9,ncol=3)
@@ -558,12 +564,11 @@ for(i in 2:ncol(subset_women)) {
 **Calculating BAe (Equation 2 in Levine 2013) for men and women**
 
 ```{r}
-BAe_men <- list()
-for(i in 1:nrow(subset_men)) {
-  BAe_men[[i]] <- sum((subset_men[i,j+1]-parameters_men[j,1])*((parameters_men[j,2])/(parameters_men[j,3]^2)))/sum(((parameters_men[j,2])/(parameters_men[j,3]))^2)
-}
-BAe_men <- unlist(BAe_men)
-
+# BAe_men <- list()
+# for(i in 1:nrow(subset_men)) {
+#  BAe_men[[i]] <- sum((subset_men[i,j+1]-parameters_men[j,1])*((parameters_men[j,2])/(parameters_men[j,3]^2)))/sum(((parameters_men[j,2])/(parameters_men[j,3]))^2)
+# }
+# BAe_men <- unlist(BAe_men)
 
 BAe_women <- list()
 for(i in 1:nrow(subset_women)) {
@@ -578,18 +583,18 @@ This block is somewhat limited as I've resricted the calculation to only include
 ```{r}
 
 #Subseting the data again to only include those cases with full data.  
-subset2_men <- subset_men[complete.cases(subset_men),]
+# subset2_men <- subset_men[complete.cases(subset_men),]
 subset2_women <- subset_women[complete.cases(subset_women),]
 
-i <- 1:nrow(subset2_men)
+# i <- 1:nrow(subset2_men)
 
-SBA2_men <- (sum(((BAe_men[i]-subset2_men[i,1]) - (sum((BAe_men[i]-subset2_men[i,1])/(length(which(!is.na(BAe_men)))),na.rm=TRUE)))^2,na.rm=TRUE)/(length(which(!is.na(BAe_men))))) - ((1-Rchar_men^2)/(Rchar_men^2))*(45^2)/(12*length(j))
+# SBA2_men <- (sum(((BAe_men[i]-subset2_men[i,1]) - (sum((BAe_men[i]-subset2_men[i,1])/(length(which(!is.na(BAe_men)))),na.rm=TRUE)))^2,na.rm=TRUE)/(length(which(!is.na(BAe_men))))) - ((1-Rchar_men^2)/(Rchar_men^2))*(45^2)/(12*length(j))
 
 i <- 1:nrow(subset2_women)
 
 SBA2_women <- (sum(((BAe_women[i]-subset2_women[i,1]) - (sum((BAe_women[i]-subset2_women[i,1])/(length(which(!is.na(BAe_women)))),na.rm=TRUE)))^2,na.rm=TRUE)/(length(which(!is.na(BAe_women))))) - ((1-Rchar_women^2)/(Rchar_women^2))*(45^2)/(12*length(j))
 
-SBA2_men
+# SBA2_men
 SBA2_women
 ```             
              
@@ -597,13 +602,13 @@ SBA2_women
 
 ```{r}
 mydata_subset <- dplyr::select(BA_NHANES_Parity,Age,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count,SEQN,Gender)
-mydata_men <- subset(mydata_subset,Gender==1 & Age<=84)
+# mydata_men <- subset(mydata_subset,Gender==1 & Age<=84)
 mydata_women <- subset(mydata_subset,Gender==2 & Age<=84)
 
 
 #Creating empty dataframes with length the same as those for mydata_men/women but which will hold SEQN.
 hold <- dplyr::select(BA_NHANES_Parity,SEQN,Gender)
-hold_men <- subset(hold,Gender==1)
+# hold_men <- subset(hold,Gender==1)
 hold_women <- subset(hold,Gender==2)
 ```
 
@@ -612,11 +617,11 @@ hold_women <- subset(hold,Gender==2)
 
 ```{r}
 #Replace 'mydata_men' with the name of your sample/analysis dataset, which should be filtered to only include men. Chronological age is assumed to be in the first column, followed by the biomarkers in an order consistent with all other steps.    
-KDM_men <- list()
-for(i in 1:nrow(mydata_men)) {
-  KDM_men[[i]] <- (sum((mydata_men[i,j+1]-parameters_men[j,1])*((parameters_men[j,2])/(parameters_men[j,3]^2)))+((mydata_men[i,1])/(SBA2_men)))/(sum(((parameters_men[j,2])/(parameters_men[j,3]))^2)+1/SBA2_men)
-}
-KDM_men <- unlist(KDM_men)
+# KDM_men <- list()
+# for(i in 1:nrow(mydata_men)) {
+#  KDM_men[[i]] <- (sum((mydata_men[i,j+1]-parameters_men[j,1])*((parameters_men[j,2])/(parameters_men[j,3]^2)))+((mydata_men[i,1])/(SBA2_men)))/(sum(((parameters_men[j,2])/(parameters_men[j,3]))^2)+1/SBA2_men)
+# }
+# KDM_men <- unlist(KDM_men)
 
 #Replace 'mydata_women' with the name of your sample/analysis dataset, which should be filtered to only include women. Chronological age is assumed to be in the first column, followed by the biomarkers in an order consistent with all other steps.   
 KDM_women <- list()
@@ -631,14 +636,14 @@ KDM_women <- unlist(KDM_women)
 If your "mydata" files are already structured as a dataframe you could simply add the KDM values to the existing files with the following statement "mydata_men$KDM <- KDM_men". Similarly for women. 
 
 ```{r}
-hold_men <- dplyr::select(hold_men,SEQN)
-hold_men$KDM <- KDM_men
+#hold_men <- dplyr::select(hold_men,SEQN)
+# hold_men$KDM <- KDM_men
 
 hold_women <- dplyr::select(hold_women,SEQN)
 hold_women$KDM <- KDM_women
 
-hold_both <- dplyr::bind_rows(hold_men,hold_women)
-BA_NHANES_Parity <- dplyr::full_join(BA_NHANES_Parity,hold_both,by="SEQN")
+# hold_both <- dplyr::bind_rows(hold_men,hold_women)
+BA_NHANES_Parity <- dplyr::full_join(BA_NHANES_Parity,hold_women,by="SEQN")
 cor(BA_NHANES_Parity$KDM,BA_NHANES_Parity$Age, use="pairwise.complete.obs")
 ```
 
