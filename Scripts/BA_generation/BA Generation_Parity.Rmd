@@ -53,17 +53,9 @@ Demo_2007 <- dplyr::transmute(Demo_2007,SEQN=SEQN,WAVE=(SEQN*0+5),RIAGENDR=RIAGE
 Demo_2009 <- dplyr::select(DEMO$DEMO_F,SEQN,RIAGENDR,RIDAGEYR,RIDRETH1,DMDEDUC2,INDFMPIR,RIDEXPRG)
 Demo_2009 <- dplyr::transmute(Demo_2009,SEQN=SEQN,WAVE=(SEQN*0+6),RIAGENDR=RIAGENDR,RIDAGEYR=RIDAGEYR,RIDRETH1=RIDRETH1,DMDEDUC2=DMDEDUC2,INDFMPIR=INDFMPIR,RIDEXPRG=RIDEXPRG)
 
-Demo_2011 <- dplyr::select(DEMO$DEMO_G,SEQN,RIAGENDR,RIDAGEYR,RIDRETH1,DMDEDUC2,INDFMPIR,RIDEXPRG)
-Demo_2011 <- dplyr::transmute(Demo_2011,SEQN=SEQN,WAVE=(SEQN*0+7),RIAGENDR=RIAGENDR,RIDAGEYR=RIDAGEYR,RIDRETH1=RIDRETH1,DMDEDUC2=DMDEDUC2,INDFMPIR=INDFMPIR,RIDEXPRG=RIDEXPRG)
-
-Demo_2013 <- dplyr::select(DEMO$DEMO_H,SEQN,RIAGENDR,RIDAGEYR,RIDRETH1,DMDEDUC2,INDFMPIR,RIDEXPRG)
-Demo_2013 <- dplyr::transmute(Demo_2013,SEQN=SEQN,WAVE=(SEQN*0+8),RIAGENDR=RIAGENDR,RIDAGEYR=RIDAGEYR,RIDRETH1=RIDRETH1,DMDEDUC2=DMDEDUC2,INDFMPIR=INDFMPIR,RIDEXPRG=RIDEXPRG)
-
-Demo_2015 <- dplyr::select(DEMO$DEMO_I,SEQN,RIAGENDR,RIDAGEYR,RIDRETH1,DMDEDUC2,INDFMPIR,RIDEXPRG)
-Demo_2015 <- dplyr::transmute(Demo_2015,SEQN=SEQN,WAVE=(SEQN*0+9),RIAGENDR=RIAGENDR,RIDAGEYR=RIDAGEYR,RIDRETH1=RIDRETH1,DMDEDUC2=DMDEDUC2,INDFMPIR=INDFMPIR,RIDEXPRG=RIDEXPRG)
 
 #Combining demographics into one dataframe for all waves 
-Demographics_ALL <- dplyr::bind_rows(Demo_1999,Demo_2001,Demo_2003,Demo_2005,Demo_2007,Demo_2009,Demo_2011,Demo_2013,Demo_2015)
+Demographics_ALL <- dplyr::bind_rows(Demo_1999,Demo_2001,Demo_2003,Demo_2005,Demo_2007,Demo_2009)
 Demographics_ALL <- dplyr::transmute(Demographics_ALL,SEQN=SEQN,WAVE=WAVE,Gender=RIAGENDR,Age=RIDAGEYR,Ethnicity=RIDRETH1,Education=DMDEDUC2,PovertyIncome=INDFMPIR,Pregnant=RIDEXPRG)
 summary(Demographics_ALL)
 dim(Demographics_ALL)
@@ -87,11 +79,8 @@ BMI_2003 <- dplyr::select(BMI$BMX_C,SEQN,BMXBMI,BMXHT,BMXWAIST)
 BMI_2005 <- dplyr::select(BMI$BMX_D,SEQN,BMXBMI,BMXHT,BMXWAIST)
 BMI_2007 <- dplyr::select(BMI$BMX_E,SEQN,BMXBMI,BMXHT,BMXWAIST)
 BMI_2009 <- dplyr::select(BMI$BMX_F,SEQN,BMXBMI,BMXHT,BMXWAIST)
-BMI_2011 <- dplyr::select(BMI$BMX_G,SEQN,BMXBMI,BMXHT,BMXWAIST)
-BMI_2013 <- dplyr::select(BMI$BMX_H,SEQN,BMXBMI,BMXHT,BMXWAIST)
-BMI_2015 <- dplyr::select(BMI$BMX_I,SEQN,BMXBMI,BMXHT,BMXWAIST)
 
-BMI_ALL <- dplyr::bind_rows(BMI_1999,BMI_2001,BMI_2003,BMI_2005,BMI_2007,BMI_2009,BMI_2011,BMI_2013,BMI_2015)
+BMI_ALL <- dplyr::bind_rows(BMI_1999,BMI_2001,BMI_2003,BMI_2005,BMI_2007,BMI_2009)
 BMI_ALL <- dplyr::transmute(BMI_ALL,SEQN=SEQN,BMI=BMXBMI,Height=BMXHT,Waist=BMXWAIST)
 summary(BMI_ALL)
 dim(BMI_ALL)
@@ -99,7 +88,7 @@ dim(BMI_ALL)
 
 
 #Extracting CRP#
-CRP is listed in units of mg/dL, but was only measured through the 2009-2010 cycle. However, a high sensitivity CRP assay was added back to NHANES in 2015. These units are mg/L and will need to be divided by 10 to equal units in previous waves. The lower limit of detection for all the CRP assays is 0.01 so I'll recode these values to missing. 
+CRP is listed in units of mg/dL, but was only measured through the 2009-2010 cycle. The lower limit of detection for all the CRP assays is 0.01 so I'll recode these values to missing. 
 
 ```{r}
 CRP_1999 <- dplyr::select(CRP$LAB11,SEQN,LBXCRP)
@@ -117,11 +106,7 @@ CRP_2005$LBXCRP[CRP_2005$LBXCRP<=0.01] <- NA
 CRP_2007$LBXCRP[CRP_2007$LBXCRP<=0.01] <- NA
 CRP_2009$LBXCRP[CRP_2009$LBXCRP<=0.01] <- NA
 
-#CRP in 2015 was measured in mg/L units and needs to be divided by 10 to equal units in other waves. Before this I need to remove values below the lower limit of detection (values less than 0.11).  
-CRP_2015 <- dplyr::select(CRP$HSCRP_I,SEQN,LBXHSCRP)
-CRP_2015$LBXHSCRP[CRP_2015$LBXHSCRP<=0.11] <- NA
-CRP_2015 <- dplyr::transmute(CRP_2015,SEQN=SEQN,LBXCRP=LBXHSCRP/10)
-CRP_ALL <- dplyr::bind_rows(CRP_1999,CRP_2001,CRP_2003,CRP_2005,CRP_2007,CRP_2009,CRP_2015)
+CRP_ALL <- dplyr::bind_rows(CRP_1999,CRP_2001,CRP_2003,CRP_2005,CRP_2007,CRP_2009)
 
 #Creating log-transformed creatinine variable
 CRP_ALL <- dplyr::transmute(CRP_ALL,SEQN=SEQN,CRP=LBXCRP,Ln_CRP=log(LBXCRP))
@@ -150,10 +135,8 @@ creatinine_2005 <- dplyr::mutate(creatinine_2005,SEQN=SEQN,LBXSCR=(-0.016+0.978*
 
 creatinine_2007 <- dplyr::select(creatinine$BIOPRO_E,SEQN,LBXSCR,LBDSALSI,LBXSAPSI)
 creatinine_2009 <- dplyr::select(creatinine$BIOPRO_F,SEQN,LBXSCR,LBDSALSI,LBXSAPSI)
-creatinine_2011 <- dplyr::select(creatinine$BIOPRO_G,SEQN,LBXSCR,LBDSALSI,LBXSAPSI)
-creatinine_2013 <- dplyr::select(creatinine$BIOPRO_H,SEQN,LBXSCR,LBDSALSI,LBXSAPSI)
-creatinine_2015 <- dplyr::select(creatinine$BIOPRO_I,SEQN,LBXSCR,LBDSALSI,LBXSAPSI)
-creatinine_ALL <- dplyr::bind_rows(creatinine_1999,creatinine_2001,creatinine_2003,creatinine_2005,creatinine_2007,creatinine_2009,creatinine_2011,creatinine_2013,creatinine_2015)
+
+creatinine_ALL <- dplyr::bind_rows(creatinine_1999,creatinine_2001,creatinine_2003,creatinine_2005,creatinine_2007,creatinine_2009)
 
 #Creating informative names 
 colnames(creatinine_ALL) <- c("SEQN","Creatinine","Albumin","Alkaline_Phosphatase")
@@ -164,7 +147,9 @@ summary(creatinine_ALL)
 #Extracting Glucose#
 The measurement methods for glucose, and especially insulin were widely changes across NHANES waves. 
 
-Adjustment of glucose involves multiple regression equations as the methodology changes 3 times between 1999 and 2016. First, 1999-2004 values must be adjusted to reflect changes to the methodology for 2005-2006 such that all values are equivalent to measures from the "Hitachi 911" [see here](https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/GLU_D.htm). Next, all values prior to 2007 must be adjusted to reflect changes in methodology for 2007-2008 such that all values are equivalent to measures from the "Roche ModP" [see here](https://wwwn.cdc.gov/Nchs/Nhanes/2007-2008/GLU_E.htm). Lastly, methodology changed once again in 2015 such that these values need to be backward regressed to be comparable to values from previous waves to be in the "C501" form [see here](https://wwwn.cdc.gov/Nchs/Nhanes/2015-2016/GLU_I.htm#LBXGLU). 
+Adjustment of glucose involves multiple regression equations as the methodology changes 3 times between 1999 and 2016. First, 1999-2004 values must be adjusted to reflect changes to the methodology for 2005-2006 such that all values are equivalent to measures from the "Hitachi 911" [see here](https://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/GLU_D.htm). Next, all values prior to 2007 must be adjusted to reflect changes in methodology for 2007-2008 such that all values are equivalent to measures from the "Roche ModP" [see here](https://wwwn.cdc.gov/Nchs/Nhanes/2007-2008/GLU_E.htm).  
+
+Extracted glucose values are in units of mg/dL and need to be converted to mmol/L. 
 
 
 ```{r}
@@ -191,18 +176,8 @@ gluc_pre2007 <- dplyr::transmute(gluc_pre2007,SEQN=SEQN,LBXGLU=LBXGLU+1.148)
 gluc_2007 <- dplyr::select(gluc$GLU_E,SEQN,LBXGLU)
 gluc_2009 <- dplyr::select(gluc$GLU_F,SEQN,LBXGLU)
 
-#Combining pre-2011 measures 
-gluc_late <- dplyr::bind_rows(gluc_pre2007,gluc_2007,gluc_2009)
-
-gluc_2011 <- dplyr::select(gluc$GLU_G,SEQN,LBXGLU)
-gluc_2013 <- dplyr::select(gluc$GLU_H,SEQN,LBXGLU)
-
-
-#Extracting 2015 glucose and adjusting to match previous methods with backward Deming regression equation 
-gluc_2015 <- dplyr::select(gluc$GLU_I,SEQN,LBXGLU)
-gluc_2015 <- dplyr::transmute(gluc_2015,SEQN=SEQN,LBXGLU=LBXGLU*0.9776+0.4994)
-
-gluc_ALL <- dplyr::bind_rows(gluc_late,gluc_2011,gluc_2013,gluc_2015)
+#Combining measures 
+gluc_ALL <- dplyr::bind_rows(gluc_pre2007,gluc_2007,gluc_2009)
 
 #Making informative variable names 
 gluc_ALL <- dplyr::transmute(gluc_ALL,SEQN=SEQN,glucose=LBXGLU)
@@ -219,10 +194,7 @@ cbc_2003 <- dplyr::select(CBC$L25_C,SEQN,LBXLYPCT,LBXWBCSI,LBXMCVSI,LBXRDW)
 cbc_2005 <- dplyr::select(CBC$CBC_D,SEQN,LBXLYPCT,LBXWBCSI,LBXMCVSI,LBXRDW)
 cbc_2007 <- dplyr::select(CBC$CBC_E,SEQN,LBXLYPCT,LBXWBCSI,LBXMCVSI,LBXRDW)
 cbc_2009 <- dplyr::select(CBC$CBC_F,SEQN,LBXLYPCT,LBXWBCSI,LBXMCVSI,LBXRDW)
-cbc_2011 <- dplyr::select(CBC$CBC_G,SEQN,LBXLYPCT,LBXWBCSI,LBXMCVSI,LBXRDW)
-cbc_2013 <- dplyr::select(CBC$CBC_H,SEQN,LBXLYPCT,LBXWBCSI,LBXMCVSI,LBXRDW)
-cbc_2015 <- dplyr::select(CBC$CBC_I,SEQN,LBXLYPCT,LBXWBCSI,LBXMCVSI,LBXRDW)
-cbc_ALL <- dplyr::bind_rows(cbc_1999,cbc_2001,cbc_2003,cbc_2005,cbc_2007,cbc_2009,cbc_2011,cbc_2013,cbc_2015)
+cbc_ALL <- dplyr::bind_rows(cbc_1999,cbc_2001,cbc_2003,cbc_2005,cbc_2007,cbc_2009)
 
 #LLOD and ULOD values were not listed by NHANES until the 2015 cycle. To be safe I will remove values below and above these limits respectively from all cycles. This isn't a problem with lymphocyte percent (LBXLYPCT) since the limits are 0% and 100%
 cbc_ALL$LBXWBCSI[cbc_ALL$LBXWBCSI<=0.050] <- NA 
@@ -232,11 +204,11 @@ cbc_ALL$LBXMCVSI[cbc_ALL$LBXMCVSI>=150.00] <- NA
 cbc_ALL$LBXRDW[cbc_ALL$LBXRDW<=10.00] <- NA
 cbc_ALL$LBXRDW[cbc_ALL$LBXRDW>=40.00] <- NA
 
-#Adding informative column names and creating log transformed White Count
+#Adding informative column names
 cbc_ALL <- dplyr::transmute(cbc_ALL,SEQN=SEQN,Lymphocyte_percent=LBXLYPCT,White_Count=LBXWBCSI,MCV=LBXMCVSI,Red_Cell_Width=LBXRDW)
 ```
 
-#Combining NHANES Continuous Data#
+#Combining NHANES Continuous Data and removing extraneous datafiles#
 
 ```{r}
 Step1 <- dplyr::full_join(Demographics_ALL,BMI_ALL,by="SEQN")
@@ -244,9 +216,19 @@ Step2 <- dplyr::full_join(Step1,CRP_ALL,by="SEQN")
 Step3 <- dplyr::full_join(Step2,creatinine_ALL,by="SEQN")
 Step4 <- dplyr::full_join(Step3,gluc_ALL,by="SEQN")
 Data_continuous <- dplyr::full_join(Step4,cbc_ALL,by="SEQN")
+
+#Converting creatinine from mg/dL to umol/L
+Data_continuous$PHENO_Creatinine <- Data_continuous$Creatinine*88.42
+#Converting glucose from mg/dL to mmol/L
+Data_continuous$PHENO_Glucose <- Data_continuous$glucose*0.05551
+
 dim(Data_continuous)
 summary(Data_continuous)
+
+#Removing extraneous files from global environment
+rm(DEMO,Demo_1999,Demo_2001,Demo_2003,Demo_2005,Demo_2007,Demo_2009,BMI,BMI_1999,BMI_2001,BMI_2003,BMI_2005,BMI_2007,BMI_2009,CRP,CRP_1999,CRP_2001,CRP_2003,CRP_2005,CRP_2007,CRP_2009,creatinine,creatinine_1999,creatinine_2001,creatinine_2003,creatinine_2005,creatinine_2007,creatinine_2009,gluc,gluc_1999,gluc_2001,gluc_2003,gluc_2005,gluc_2007,gluc_2009,gluc_early,gluc_middle,gluc_pre2007,CBC,cbc_1999,cbc_2001,cbc_2003,cbc_2005,cbc_2007,cbc_2009,Step1,Step2,Step3,Step4)
 ```
+
 
 #IMPORTING NHANES III DATA#
 
@@ -297,7 +279,8 @@ Step1_III <- dplyr::left_join(Demo_III,BMI_III,by="SEQN")
 According to [this publication](https://www.sciencedirect.com/science/article/abs/pii/S0272638607012449) serum creatinine from NHANES III needs to be adjusted to match standardized measurements. 
 
 ```{r}
-#Biomarkers extracted are CRP in mg/dL (CRP), creatinine in mg/dL (CEP), Albumin in g/L (AMPSI), Alkaline Phosphatase in U/L (APPSI), & glucose in mg/dL (G1P)
+#Biomarkers extracted are CRP in mg/dL (CRP), creatinine in mg/dL (CEP), Albumin in g/L (AMPSI), Alkaline Phosphatase in U/L (APPSI), & glucose in mg/dL (G1P). Creatinine needs to be converted to umol/L and glucose needs to be converted to mmol/L prior to calculating BA measures. 
+
 Bio_III <- dplyr::select(lab,SEQN,CRP,CEP,AMPSI,APPSI,G1P)
 
 #Adding informative names,  
@@ -329,7 +312,7 @@ Bio_cbc$RWP[Bio_cbc$RWP==88888] <- NA
 Bio_cbc <- dplyr::transmute(Bio_cbc,SEQN=SEQN,Lymphocyte_percent=LMPPCNT,White_Count=WCPSI,MCV=MVPSI,Red_Cell_Width=RWP)
 ```
 
-#Combining All NHANES III Data & NHANES Continuous Data#
+#Combining NHANES III Data, removing extraneous files, & creating a dataframe to hold all data#
 
 ```{r}
 Step2_III <- dplyr::left_join(Step1_III,Bio_III,by="SEQN")
@@ -337,34 +320,52 @@ Reference_III <- dplyr::left_join(Step2_III,Bio_cbc,by="SEQN")
 dim(Reference_III)
 summary(Reference_III)
 
-ALL_DATA <- dplyr::bind_rows(Data_continuous,Reference_III)
 #Converting creatinine from mg/dL to umol/L
-ALL_DATA$PHENO_Creatinine <- ALL_DATA$Creatinine*88.42
+Reference_III$PHENO_Creatinine <- Reference_III$Creatinine*88.42
 #Converting glucose from mg/dL to mmol/L
-ALL_DATA$PHENO_Glucose <- ALL_DATA$glucose*0.05551
+Reference_III$PHENO_Glucose <- Reference_III$glucose*0.05551
+
+#Removing extraneous files from global environment
+rm(adult,lab,exam,Demo_III,BMI_III,Step2_III)
+
+ALL_DATA <- dplyr::bind_rows(Data_continuous,Reference_III)
 ```
+
 
 
 #Checking skewness and kurtosis & Windsorizing Data#
 
 ```{r}
 library(moments)
-skewness(ALL_DATA,na.rm=TRUE)
-kurtosis(ALL_DATA,na.rm=TRUE)
-
-
-#Winsorizing outliers
 library(DescTools)
 
-ALL_DATA_Win <- dplyr::select(ALL_DATA,SEQN,CRP:PHENO_Glucose)
-ALL_DATA_Win <- lapply(ALL_DATA_Win,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
-ALL_DATA_Win <- as.data.frame(ALL_DATA_Win)
-ALL_DATA_Win <- dplyr::select(ALL_DATA_Win,CRP:PHENO_Glucose)
-Temp <- dplyr::select(ALL_DATA,SEQN,WAVE,Age,Gender,Pregnant,BMI)
-ALL_DATA_Win <- dplyr::bind_cols(Temp,ALL_DATA_Win)
-summary(ALL_DATA_Win)
-skewness(ALL_DATA_Win,na.rm=TRUE)
-kurtosis(ALL_DATA_Win,na.rm=TRUE)
+#Winsorizing outliers in reference dataset 
+skewness(Reference_III,na.rm=TRUE)
+kurtosis(Reference_III,na.rm=TRUE)
+
+Reference_Win <- dplyr::select(Reference_III,SEQN,CRP:PHENO_Glucose)
+Reference_Win <- lapply(Reference_Win,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
+Reference_Win <- as.data.frame(Reference_Win)
+Reference_Win <- dplyr::select(Reference_Win,CRP:PHENO_Glucose)
+Temp <- dplyr::select(Reference_III,SEQN,WAVE,Age,Gender,Pregnant,BMI)
+Reference_Win <- dplyr::bind_cols(Temp,Reference_Win)
+summary(Reference_Win)
+skewness(Reference_Win,na.rm=TRUE)
+kurtosis(Reference_Win,na.rm=TRUE)
+
+#Winsorizing outliers in analytical dataset 
+skewness(Data_continuous,na.rm=TRUE)
+kurtosis(Data_continuous,na.rm=TRUE)
+
+Analysis_Win <- dplyr::select(Data_continuous,SEQN,CRP:PHENO_Glucose)
+Analysis_Win <- lapply(Analysis_Win,Winsorize,minval=NULL,maxval=NULL,probs=c(0.01,0.99),na.rm=TRUE,type=7)
+Analysis_Win <- as.data.frame(Analysis_Win)
+Analysis_Win <- dplyr::select(Analysis_Win,CRP:PHENO_Glucose)
+Temp <- dplyr::select(Data_continuous,SEQN,WAVE,Age,Gender,Pregnant,BMI)
+Analysis_Win <- dplyr::bind_cols(Temp,Analysis_Win)
+summary(Analysis_Win)
+skewness(Analysis_Win,na.rm=TRUE)
+kurtosis(Analysis_Win,na.rm=TRUE)
 ```
 
 
@@ -376,10 +377,9 @@ For now this only includes NHANES panels through 2010.
 
 ```{r}
 #Subsetting data
-BA_NHANES_Parity <- dplyr::select(ALL_DATA_Win,SEQN,WAVE,Age,Gender,Pregnant,BMI,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
-BA_NHANES_Parity <- subset(BA_NHANES_Parity,Pregnant==2)
+BA_NHANES_Parity <- dplyr::select(Analysis_Win,SEQN,WAVE,Age,Gender,Pregnant,BMI,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
+BA_NHANES_Parity <- subset(BA_NHANES_Parity,Pregnant==2 & Age<=84)
 
-BA_NHANES_Parity <- subset(BA_NHANES_Parity, WAVE<=6)
 BA_NHANES_Parity <- BA_NHANES_Parity[complete.cases(BA_NHANES_Parity),]
 dim(BA_NHANES_Parity)
 summary(BA_NHANES_Parity)
@@ -410,9 +410,9 @@ Using cutoffs in the original units provided by Mayo instead of converting them.
 
 ```{r}
 #Reference dataframes by sex 
-Reference_HD_women <- subset(ALL_DATA_Win,WAVE==10 & Gender==2 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & Albumin>=35 & Albumin<=50 & Creatinine>=0.59 & Creatinine<=1.04 & glucose<126 & CRP<3 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=78.2 & MCV<=97.9 & Red_Cell_Width>=12.2 & Red_Cell_Width<=16.1 & Alkaline_Phosphatase>=35 & Alkaline_Phosphatase<=104 & White_Count>=3.4 & White_Count<=9.6)
+Reference_HD_women <- subset(Reference_Win, Gender==2 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & Albumin>=35 & Albumin<=50 & Creatinine>=0.59 & Creatinine<=1.04 & glucose<126 & CRP<3 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=78.2 & MCV<=97.9 & Red_Cell_Width>=12.2 & Red_Cell_Width<=16.1 & Alkaline_Phosphatase>=35 & Alkaline_Phosphatase<=104 & White_Count>=3.4 & White_Count<=9.6)
 
-Reference_HD_men <- subset(ALL_DATA_Win,WAVE==10 & Gender==1 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & Albumin>=35 & Albumin<=50 & Creatinine>=0.74 & Creatinine<=1.35 & glucose<126 & CRP<3 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=78.2 & MCV<=97.9 & Red_Cell_Width>=11.8 & Red_Cell_Width<=14.5 & Alkaline_Phosphatase>=45 & Alkaline_Phosphatase<=109 & White_Count>=3.4 & White_Count<=9.6)
+Reference_HD_men <- subset(Reference_Win, Gender==1 & Age>=20 & Age<=30 & BMI<30 & Pregnant==2 & Albumin>=35 & Albumin<=50 & Creatinine>=0.74 & Creatinine<=1.35 & glucose<126 & CRP<3 & Lymphocyte_percent>=28 & Lymphocyte_percent<=55 & MCV>=78.2 & MCV<=97.9 & Red_Cell_Width>=11.8 & Red_Cell_Width<=14.5 & Alkaline_Phosphatase>=45 & Alkaline_Phosphatase<=109 & White_Count>=3.4 & White_Count<=9.6)
 
 dim(Reference_HD_women)
 dim(Reference_HD_men)
@@ -484,7 +484,7 @@ cor(BA_NHANES_Parity$LOG_HD,BA_NHANES_Parity$Age, use="pairwise.complete.obs")
 
 ```{r}
 #The "pregnant" variable is a dichotomous indicator of whether the participant is a pregnant female (1) or a non-pregnant female/male (2) 
-subset_age_nopreg <- subset(ALL_DATA_Win, WAVE==10 & Age>=30 & Age <=75 & Pregnant==2)
+subset_age_nopreg <- subset(Reference_Win, Age>=30 & Age <=75 & Pregnant==2)
 
 #We'll need this further subsetted to men and women to calculate the model parameters for each individual biomarker (i.e. correlations, intercept, slope, error)
 subset_men <- subset(subset_age_nopreg, Gender==1)
@@ -597,8 +597,8 @@ SBA2_women
 
 ```{r}
 mydata_subset <- dplyr::select(BA_NHANES_Parity,Age,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count,SEQN,Gender)
-mydata_men <- subset(mydata_subset,Gender==1)
-mydata_women <- subset(mydata_subset,Gender==2)
+mydata_men <- subset(mydata_subset,Gender==1 & Age<=84)
+mydata_women <- subset(mydata_subset,Gender==2 & Age<=84)
 
 
 #Creating empty dataframes with length the same as those for mydata_men/women but which will hold SEQN.
@@ -646,6 +646,6 @@ cor(BA_NHANES_Parity$KDM,BA_NHANES_Parity$Age, use="pairwise.complete.obs")
 
 ```{r}
 library(foreign)
-write.foreign(as.data.frame(BA_NHANES_Parity),"/Volumes/LAB COWBOY/BA and Parity/Developing Aging Measures/BA_NHANES_Parity.txt","/Volumes/LAB COWBOY/BA and Parity/Developing Aging Measures/BA_NHANES_Parity.sps", package="SPSS")
+write.foreign(as.data.frame(BA_NHANES_Parity),"C:/Users/wjh180/Box/Working Files/BA and Parity/BA_NHANES_Parity.txt","C:/Users/wjh180/Box/Working Files/BA and Parity/BA_NHANES_Parity.sps", package="SPSS")
 ```
 
