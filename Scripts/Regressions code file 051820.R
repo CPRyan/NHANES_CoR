@@ -5,10 +5,6 @@ library(ggplot2)
 library(survey)
 library(foreign)
 library(psych)
-#library(jtools)
-#library(ggstance)
-#library(corrplot)
-#library(GGally)
 
 NHANES <- read.csv("~/GitHub/NHANES_CoR/Data/NHANES_051720.csv", header=TRUE)
 BA <- read_sav("~/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.sav")
@@ -117,18 +113,31 @@ ggplot(df3, aes(x=livebirths, fill = menopause)) +
 df2 <- filter(df, LM >0)
 df3 <- filter(df2, RIAGENDR ==2)
 df4 <- filter(df3, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2)
+df5 <- filter(df4, livebirths <7)
+df5 <- df5 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause))
 
 ##Analyses: Time since last birth
 
 #### Excluding 7+ live births
 nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 7 & RIDEXPRG == 2)
 
+#### YEARS
 #### Primary analyses -- all covariates 
+summary(LM1 <- svyglm(LM ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
+summary(HD1 <- svyglm(LOG_HD ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
+summary(KDM1 <- svyglm(KDM ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
+
+
+#### MONTHS
 summary(LM1 <- svyglm(LM ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
 summary(HD1 <- svyglm(LOG_HD ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
 summary(KDM1 <- svyglm(KDM ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
 
-
-
-##CHANGEs to MAKE to StATA
-BMI^2
+###Correlation plot
+dfcor<-df5[c("RIDAGEYR", "LM", "LOG_HD", "KDM")]
+dfcor <- dfcor %>% rename(
+  "Age" = RIDAGEYR,
+  "HD (log)" = LOG_HD
+)
+             
+pairs.panels(dfcor, stars= TRUE, method = "pearson", hist.col = "gray", cex.labels=1.9, ellipses = FALSE) 
