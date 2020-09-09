@@ -107,6 +107,7 @@ ggplot(df3, aes(x=livebirths, fill = menopause)) +
   geom_histogram(position = "dodge", stat = "count", color = "black") +
   theme_minimal() + scale_fill_grey() + 
   ylab("Frequency") + xlab("Live births") + 
+  theme(legend.position = "none") +
   theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18))
 
 #### Sample size funnel (starting with 92,062)
