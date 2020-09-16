@@ -8,7 +8,7 @@ library(psych)
 
 #Remove "/Documents". I had to add this to get it to run on my office Mac -WJH
 NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_051720.csv", header=TRUE)
-BA <- read_sav("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.sav")
+BA <- load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
 
 df <- merge (NHANES, BA, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="PhenoAge"] <- "LM"
@@ -42,8 +42,8 @@ df$livebirths_dichot <- as.factor(df$livebirths_dichot)
 df <- within(df, livebirths_dichot <- relevel(livebirths_dichot, ref = "0"))
 
 #Make LM resid variable
-df2 <- df %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, BMI, INDFMPIR, RIDRETH1, smoking, DMDEDUC2,LM,KDM,LOG_HD))
-df3 <- filter(df2, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & livebirths <7)
+df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & livebirths <7)
+df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, BMI, INDFMPIR, RIDRETH1, smoking, DMDEDUC2,LM,KDM,LOG_HD))
 lm2 <- lm(LM~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df3, resids)
