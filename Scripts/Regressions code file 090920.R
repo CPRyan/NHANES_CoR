@@ -12,6 +12,7 @@ NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_051720.csv", heade
 BA <- load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
 =======
 NHANES <- read.csv("~/GitHub/NHANES_CoR/Data/NHANES_090920.csv", header=TRUE)
+#Don't use the .sav file anymore. Use the .rda. It is updated with some quality of life tweaks that improved the correlation with age. -WJH 
 BA <- read_sav("~/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.sav")
 >>>>>>> 2c4df5e3b011b32bc93e286c84c427019ffbe4b6
 
