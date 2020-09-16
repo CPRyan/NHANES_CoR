@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = FALSE)
 CHANGE LOG 
 2020_09_10: Changed files named "creatinine" to be named "lab"" instead. This better reflects the variables within since I am extracting more than just creatinine here. Recoded NHANES III CBC data as missing for values above and below the limits of detection first reported in NHANES 2015. 
 
-2020_09_16: Changed KDM code to calcualte all model features using only women with complete biomarker data. Started code to calculate allostatic load based on biomarker distribution within the analytical sample. Changed final export to pipe out an R file instead of the convaluted SPSS files. 
+2020_09_16: Changed KDM code to calcualte all model features using only women with complete biomarker data. Changed final export to pipe out an R file instead of the convaluted SPSS files. Changed how pregnancy variable was coded in analytical sample to be nonpregnant for women aged 60 or older and missing for other women or women with uncertain status. only include women with missing data instead of recoding those with uncertain status as nonpregnant.Changed how pregnacy variable was coded in reference sample to be nonpregnant for women aged 60 or older and missing for other women or women with uncertain status.  
 
 **Activating RNHANES Package** 
 
@@ -62,9 +62,10 @@ Demo_2009 <- dplyr::transmute(Demo_2009,SEQN=SEQN,WAVE=(SEQN*0+6),RIAGENDR=RIAGE
 Demographics_ALL <- dplyr::bind_rows(Demo_1999,Demo_2001,Demo_2003,Demo_2005,Demo_2007,Demo_2009)
 Demographics_ALL <- dplyr::transmute(Demographics_ALL,SEQN=SEQN,WAVE=WAVE,Gender=RIAGENDR,Age=RIDAGEYR,Ethnicity=RIDRETH1,Education=DMDEDUC2,PovertyIncome=INDFMPIR,Pregnant=RIDEXPRG)
 
-#Recoding pregnancy variable to be nonpregnant for all men and for individuals of uncertain pregnancy status  
+#Recoding pregnancy variable to be nonpregnant for all women aged 60-84 since they were not asked this question and coded as missing 
 #Demographics_ALL$Pregnant[Demographics_ALL$Pregnant==3] <- 2
-#Demographics_ALL$Pregnant[is.na(Demographics_ALL$Pregnant)] <- 2
+Demographics_ALL <- dplyr::mutate(Demographics_ALL,Pregnant = case_when(Pregnant==3 ~3, Gender==2 & Age>59 & Age<=84~2, Pregnant==1~1,Pregnant==2~2))
+
 
 #Recoding missing or nonresponse indicators to NA
 Demographics_ALL$Education[Demographics_ALL$Education==7] <- NA
@@ -252,7 +253,7 @@ BMI_III <- dplyr::select(exam,SEQN,MAPF12R,BMPBMI,BMPHT,BMPWAIST)
 BMI_III <- dplyr::transmute(BMI_III,SEQN=SEQN,Pregnant=MAPF12R,BMI=BMPBMI,Height=BMPHT,Waist=BMPWAIST)
 
 
-#Recoding pregnancy variable to be nonpregnant for all men and for individuals of uncertain pregnancy status  
+#Recoding pregnancy variable to be missing for those with blank data or did not know.   
 BMI_III$Pregnant[BMI_III$Pregnant==8] <- NA
 BMI_III$Pregnant[BMI_III$Pregnant==9] <- NA
 #BMI_III$Pregnant[is.na(BMI_III$Pregnant)] <- 2
@@ -264,6 +265,9 @@ BMI_III$Waist[BMI_III$Waist==88888] <- NA
 
 #Combining demographic and body measure items into one dataframe
 Step1_III <- dplyr::left_join(Demo_III,BMI_III,by="SEQN")
+
+#Recoding pregnancy variable to be nonpregnant for all women aged 60-90 since they were not asked this question and coded as missing 
+Step1_III <- dplyr::mutate(Step1_III,Pregnant = case_when(Gender==2 & Age>59 & Age<=90~2, Pregnant==1~1,Pregnant==2~2))
 ```
 
 #Extracting NHANES III biomarker data#
