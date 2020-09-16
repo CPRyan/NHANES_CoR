@@ -7,8 +7,13 @@ library(foreign)
 library(psych)
 
 #Remove "/Documents". I had to add this to get it to run on my office Mac -WJH
+<<<<<<< HEAD
 NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_051720.csv", header=TRUE)
 BA <- load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
+=======
+NHANES <- read.csv("~/GitHub/NHANES_CoR/Data/NHANES_090920.csv", header=TRUE)
+BA <- read_sav("~/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.sav")
+>>>>>>> 2c4df5e3b011b32bc93e286c84c427019ffbe4b6
 
 df <- merge (NHANES, BA, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="PhenoAge"] <- "LM"
@@ -47,7 +52,7 @@ df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, BMI, INDFM
 lm2 <- lm(LM~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df3, resids)
-resids2 <- resids[,c(1,48)]
+resids2 <- resids[,c(1,49)]
 df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "LM_age_resid"
 
@@ -55,7 +60,7 @@ colnames(df)[colnames(df)=="lm2$residuals"] <- "LM_age_resid"
 lm2 <- lm(KDM~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df3, resids)
-resids2 <- resids[,c(1,48)]
+resids2 <- resids[,c(1,49)]
 df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "KDM_age_resid"
 
@@ -63,9 +68,15 @@ colnames(df)[colnames(df)=="lm2$residuals"] <- "KDM_age_resid"
 lm2 <- lm(LOG_HD~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df3, resids)
-resids2 <- resids[,c(1,48)]
+resids2 <- resids[,c(1,49)]
 df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "HD_age_resid"
+
+#Create correct sample weights; see https://wwwn.cdc.gov/nchs/nhanes/tutorials/module3.aspx
+df <- df %>%
+  mutate(WTMEC12YR = NA,
+         WTMEC12YR = ifelse(SDDSRVYR == 1 | SDDSRVYR == 2, (WTMEC4YR/3), WTMEC12YR),
+         WTMEC12YR = ifelse(SDDSRVYR == 3 | SDDSRVYR == 4 | SDDSRVYR == 5 | SDDSRVYR == 6, (WTMEC2YR/6), WTMEC12YR))
 
 #write to .dta
 #write.dta(df, "NHANES_repro_file_051820.dta")
@@ -74,7 +85,7 @@ colnames(df)[colnames(df)=="lm2$residuals"] <- "HD_age_resid"
 
 base <- svydesign(id      = ~SDMVPSU,
                   strata  = ~SDMVSTRA,
-                  weights = ~WTMEC2YR,
+                  weights = ~WTMEC12YR,
                   nest    = TRUE,                  
                   data    = df)
 
@@ -120,7 +131,7 @@ ggplot(df3, aes(x=livebirths, fill = menopause)) +
   ylab("Frequency") + xlab("Live births") + 
   theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18))
 
-#### Sample size funnel (starting with 92,062)
+#### Sample size funnel (starting with 62,160)
 df2 <- filter(df, LM >0)
 df3 <- filter(df2, RIAGENDR ==2)
 df4 <- filter(df3, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2)

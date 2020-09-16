@@ -1,17 +1,16 @@
 #Download demo and covariate data 
 library(purrr)
 library(RNHANES)
-library(devtools)
 library(dplyr)
 library(car)
 
 #### Demographic files ####
 
 demo_a <- nhanes_load_data("DEMO", "1999-2000")
-demo_a_short <- demo_a[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+demo_a_short <- demo_a[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA", "WTMEC4YR")]
 
 demo_b <- nhanes_load_data("DEMO", "2001-2002")
-demo_b_short <- demo_b[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+demo_b_short <- demo_b[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA", "WTMEC4YR")]
 
 demo_c <- nhanes_load_data("DEMO", "2003-2004")
 demo_c_short <- demo_c[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
@@ -25,17 +24,10 @@ demo_e_short <- demo_e[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1",
 demo_f <- nhanes_load_data("DEMO", "2009-2010")
 demo_f_short <- demo_f[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
 
-demo_g <- nhanes_load_data("DEMO", "2011-2012")
-demo_g_short <- demo_g[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
+demo_no_4yrweight <- rbind(demo_c_short, demo_d_short, demo_e_short, demo_f_short)
+demo_no_4yrweight$WTMEC4YR <- NA
 
-demo_h <- nhanes_load_data("DEMO", "2013-2014")
-demo_h_short <- demo_h[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
-
-devtools::install_github("silentspringinstitute/RNHANES")
-demo_i <- nhanes_load_data("DEMO_I", "2015-2016")
-demo_i_short <- demo_i[c("SEQN", "SDDSRVYR", "RIAGENDR", "RIDAGEYR", "RIDRETH1", "DMDEDUC2", "INDFMPIR", "RIDEXPRG", "WTMEC2YR", "SDMVPSU", "SDMVSTRA")]
-
-DEMO <- rbind(demo_a_short,demo_b_short, demo_c_short, demo_d_short, demo_e_short, demo_f_short, demo_g_short, demo_h_short, demo_i_short)
+DEMO <- rbind(demo_a_short,demo_b_short, demo_no_4yrweight)
 
 #Recode so that less than high school is grouped together (so combining DMDEDUC2 1 and 2)
 DEMO$DMDEDUC2 <- car:::recode(DEMO$DMDEDUC2, '1 = 2')
@@ -59,16 +51,7 @@ smq_e_short <- smq_e[c("SMQ020", "SMQ040", "SEQN")]
 smq_f <- nhanes_load_data("SMQ", "2009-2010", demographics = FALSE)
 smq_f_short <- smq_f[c("SMQ020", "SMQ040", "SEQN")]
 
-smq_g <- nhanes_load_data("SMQ", "2011-2012", demographics = FALSE)
-smq_g_short <- smq_g[c("SMQ020", "SMQ040", "SEQN")]
-
-smq_h <- nhanes_load_data("SMQ", "2013-2014", demographics = FALSE)
-smq_h_short <- smq_h[c("SMQ020", "SMQ040", "SEQN")]
-
-smq_i <- nhanes_load_data("SMQ", "2015-2016", demographics = FALSE)
-smq_i_short <- smq_i[c("SMQ020", "SMQ040", "SEQN")]
-
-SMQ <- rbind(smq_a_short,smq_b_short, smq_c_short, smq_d_short, smq_e_short, smq_f_short, smq_g_short, smq_h_short, smq_i_short)
+SMQ <- rbind(smq_a_short,smq_b_short, smq_c_short, smq_d_short, smq_e_short, smq_f_short)
 
 SMQ$smoking <- 2 #current smoker
 SMQ$smoking[SMQ$SMQ020==2]<-0 #never smoker
@@ -115,25 +98,7 @@ colnames(rhq_f_short) <- c("timespreg", "livebirths", "mensregularity", "irregre
 rhq_f_short$menopause <- 0
 rhq_f_short$menopause[rhq_f_short$irregreason == 7] <- 1
 
-rhq_g <- nhanes_load_data("RHQ", "2011-2012", demographics = FALSE)
-rhq_g_short <- rhq_g[c("RHQ160", "RHQ171", "RHQ031", "RHD042", "SEQN", "RHQ131", "RHD190", "RHQ197")]
-colnames(rhq_g_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg", "agelastbirth", "monthssincebirth")
-rhq_g_short$menopause <- 0
-rhq_g_short$menopause[rhq_g_short$irregreason == 7] <- 1
-
-rhq_h <- nhanes_load_data("RHQ", "2013-2014", demographics = FALSE)
-rhq_h_short <- rhq_h[c("RHQ160", "RHQ171", "RHQ031", "RHD043", "SEQN", "RHQ131", "RHD190", "RHQ197")]
-colnames(rhq_h_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg", "agelastbirth", "monthssincebirth")
-rhq_h_short$menopause <- 0
-rhq_h_short$menopause[rhq_h_short$irregreason == 7 | rhq_h_short$irregreason == 3] <- 1
-
-rhq_i <- nhanes_load_data("RHQ", "2015-2016", demographics = FALSE)
-rhq_i_short <- rhq_i[c("RHQ160", "RHQ171", "RHQ031", "RHD043", "SEQN", "RHQ131", "RHD190", "RHQ197")]
-colnames(rhq_i_short) <- c("timespreg", "livebirths", "mensregularity", "irregreason", "SEQN", "everpreg", "agelastbirth", "monthssincebirth")
-rhq_i_short$menopause <- 0
-rhq_i_short$menopause[rhq_i_short$irregreason == 7 | rhq_i_short$irregreason == 3] <- 1
-
-RHQ <- rbind (rhq_a_short, rhq_b_short, rhq_c_short, rhq_d_short, rhq_e_short, rhq_f_short, rhq_g_short, rhq_h_short, rhq_i_short)
+RHQ <- rbind (rhq_a_short, rhq_b_short, rhq_c_short, rhq_d_short, rhq_e_short, rhq_f_short)
 
 RHQ$livebirths <- na_if(RHQ$livebirths, 77)
 RHQ$livebirths <- na_if(RHQ$livebirths, 99)
@@ -172,4 +137,4 @@ NHANES$RIDRETH1[NHANES$RIDRETH1 == 5] <- 3 #other
 
 NHANES$yearssincelastbirth <- NHANES$RIDAGEYR - NHANES$agelastbirth
 
-write.csv (NHANES, "NHANES_051720.csv")
+write.csv (NHANES, "NHANES_090920.csv")
