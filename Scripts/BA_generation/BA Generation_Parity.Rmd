@@ -12,6 +12,8 @@ CHANGE LOG
 
 2020_09_16: Changed KDM code to calcualte all model features using only women with complete biomarker data. Changed final export to pipe out an R file instead of the convaluted SPSS files. Changed how pregnancy variable was coded in analytical sample to be nonpregnant for women aged 60 or older and missing for other women or women with uncertain status. only include women with missing data instead of recoding those with uncertain status as nonpregnant.Changed how pregnacy variable was coded in reference sample to be nonpregnant for women aged 60 or older and missing for other women or women with uncertain status.  
 
+2020_09_18: Added code to calculate allostatic load based on distribution of biomarkers in nonpregnant women aged 18-84 (N=5870)
+
 **Activating RNHANES Package** 
 
 ```{r, include=FALSE}
@@ -660,15 +662,105 @@ save(BA_NHANES_Parity, file="/Users/wjh180/Documents/GitHub/NHANES_CoR/Data/NHAN
 ```
 
 #Allostatic Load 
-Will calcualte allostatic load scores based upon the biomarker distribution within the final analytical sample. This will include all women aged 18-84 who report having zero to six live births. 
+Will calcualte allostatic load scores based upon the biomarker distribution within all nonpregnant women aged 18-84 with complete biomarker data.  
 
-**Generating subset of comprising largest analytical sample (BA information plus info on live births)
+**Generating subset of women aged 18-84 with biomarker data**
 ```{r}
-#Reading in NHANES dataset to get pregnancy information 
-NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_051720.csv", header=TRUE)
-
-allostatic <- dplyr::left_join(BA_NHANES_Parity,NHANES,by="SEQN")
-
-allostatic <- subset(allostatic,RIDAGEYR>17 & RIDAGEYR <= 84 & livebirths >-1 & livebirths <7)
-allostatic <- allostatic %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, BMI, INDFMPIR, RIDRETH1, smoking, DMDEDUC2,PhenoAge,KDM,LOG_HD))
+load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
+allostatic <- subset(BA_NHANES_Parity,Age>17 & Age <= 84)
+#NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_051720.csv", header=TRUE)
+#allostatic <- dplyr::left_join(BA_NHANES_Parity,NHANES,by="SEQN")
+#allostatic <- subset(allostatic,Age>17 & Age<=84 & livebirths >-1 & livebirths <=7)
 ```
+
+**Establishing high risk quartiles**
+
+```{r}
+Albumin_risk <- quantile(allostatic$Albumin, probs=c(0.25),na.rm=TRUE) 
+Creatinine_risk <- quantile(allostatic$PHENO_Creatinine,probs=c(0.75),na.rm=TRUE)
+Glucose_risk <- quantile(allostatic$PHENO_Glucose,probs=c(0.75),na.rm=TRUE)
+CRP_risk <- quantile(allostatic$Ln_CRP,probs=c(0.75),na.rm=TRUE)
+Lymphocyte_risk <- quantile(allostatic$Lymphocyte_percent,probs=c(0.75),na.rm=TRUE)
+MCV_risk <- quantile(allostatic$MCV,probs=c(0.75),na.rm=TRUE)
+RDW_risk <- quantile(allostatic$Red_Cell_Width,probs=c(0.75),na.rm=TRUE)
+Alkaline_risk <- quantile(allostatic$Alkaline_Phosphatase,probs=c(0.75),na.rm=TRUE)
+WBC_risk <- quantile(allostatic$White_Count,probs=c(0.75),na.rm=TRUE)
+```
+
+**Scoring risk by biomarker**
+
+```{r}
+allostatic <- dplyr::mutate(allostatic, AL_albumin= case_when(Albumin>Albumin_risk[1]~ 0, 
+                                                 Albumin<=Albumin_risk[1]~1))
+allostatic <- dplyr::mutate(allostatic, AL_creatinine= case_when(PHENO_Creatinine<Creatinine_risk[1]~0,
+                                                    PHENO_Creatinine>=Creatinine_risk[1]~1))
+allostatic <- dplyr::mutate(allostatic, AL_glucose= case_when(PHENO_Glucose<Glucose_risk[1]~0, 
+                                                PHENO_Glucose>=Glucose_risk[1]~1))
+allostatic <- dplyr::mutate(allostatic, AL_CRP= case_when(Ln_CRP<CRP_risk[1]~0, 
+                                            Ln_CRP>=CRP_risk[1]~1))
+allostatic <- dplyr::mutate(allostatic, AL_lymphocyte= case_when(Lymphocyte_percent<Lymphocyte_risk[1]~0,
+                                                   Lymphocyte_percent>=Lymphocyte_risk[1]~1))
+allostatic <- dplyr::mutate(allostatic, AL_MCV= case_when(MCV<MCV_risk[1]~0,
+                                             MCV>=MCV_risk[1]~1))
+allostatic <- dplyr::mutate(allostatic, AL_RDW= case_when(Red_Cell_Width<RDW_risk[1]~0,
+                                            Red_Cell_Width>=RDW_risk[1]~1))
+allostatic <- dplyr::mutate(allostatic, AL_alkaline= case_when(Alkaline_Phosphatase<Alkaline_risk[1]~0,
+                                                 Alkaline_Phosphatase>=Alkaline_risk[1]~1)) 
+allostatic <- dplyr::mutate(allostatic, AL_WBC= case_when(White_Count<WBC_risk[1]~0,
+                                            White_Count>=WBC_risk[1]~1))
+allostatic <- dplyr::mutate(allostatic,AL_allostatic=(mean_n(allostatic[,22:30],9,digits=4)))
+```
+
+**Calculating allostatic load** 
+
+```{r}
+library(sjstats)
+allostatic <- dplyr::mutate(allostatic,AL=(mean_n(allostatic[,22:30],9,digits=4)))
+```
+
+**Alternative allostatic load with two tailed risk for plausible biomarkers**
+
+```{r}
+alt <- subset(BA_NHANES_Parity,Age>17 & Age <=84)
+
+Albumin_risk <- quantile(alt$Albumin, probs=c(0.25),na.rm=TRUE) 
+Creatinine_risk <- quantile(alt$PHENO_Creatinine,probs=c(0.125,0.875),na.rm=TRUE)
+Glucose_risk <- quantile(alt$PHENO_Glucose,probs=c(0.75),na.rm=TRUE)
+CRP_risk <- quantile(alt$Ln_CRP,probs=c(0.75),na.rm=TRUE)
+Lymphocyte_risk <- quantile(alt$Lymphocyte_percent,probs=c(0.125,0.875),na.rm=TRUE)
+MCV_risk <- quantile(alt$MCV,probs=c(0.125,0.875),na.rm=TRUE)
+RDW_risk <- quantile(alt$Red_Cell_Width,probs=c(0.75),na.rm=TRUE)
+Alkaline_risk <- quantile(alt$Alkaline_Phosphatase,probs=c(0.75),na.rm=TRUE)
+WBC_risk <- quantile(alt$White_Count,probs=c(0.125,0.875),na.rm=TRUE)
+
+alt <- dplyr::mutate(alt, AL_albumin= case_when(Albumin>Albumin_risk[1]~ 0, 
+                                                Albumin<=Albumin_risk[1]~1))
+alt <- dplyr::mutate(alt, AL_creatinine= case_when(PHENO_Creatinine>Creatinine_risk[1] & PHENO_Creatinine<Creatinine_risk[2]~0,
+                                                           PHENO_Creatinine<=Creatinine_risk[1] | PHENO_Creatinine>=Creatinine_risk[2]~1))
+alt <- dplyr::mutate(alt, AL_glucose= case_when(PHENO_Glucose<Glucose_risk[1]~0,
+                                                PHENO_Glucose>=Glucose_risk[1]~1))
+alt <- dplyr::mutate(alt, AL_CRP= case_when(Ln_CRP<CRP_risk[1]~0,
+                                            Ln_CRP>=CRP_risk[1]~1))
+alt <- dplyr::mutate(alt, AL_lymphocyte= case_when(Lymphocyte_percent>Lymphocyte_risk[1] & Lymphocyte_percent<Lymphocyte_risk[2]~0,
+                                                   Lymphocyte_percent<=Lymphocyte_risk[1] | Lymphocyte_percent>=Lymphocyte_risk[2]~1))
+alt <- dplyr::mutate(alt, AL_MCV= case_when(MCV>MCV_risk[1] & MCV<MCV_risk[2]~0,
+                                            MCV<=MCV_risk[1] | MCV>=MCV_risk[2]~1))
+alt <- dplyr::mutate(alt, AL_RDW= case_when(Red_Cell_Width<RDW_risk[1]~0,
+                                                    Red_Cell_Width>=RDW_risk[1]~1))
+alt <- dplyr::mutate(alt, AL_alkaline= case_when(Alkaline_Phosphatase<Alkaline_risk[1]~0,
+                                                               Alkaline_Phosphatase>=Alkaline_risk[1]~1)) 
+alt <- dplyr::mutate(alt, AL_WBC= case_when(White_Count>WBC_risk[1] & White_Count<WBC_risk[2]~0,
+                                                           White_Count<=WBC_risk[1] | White_Count>=WBC_risk[2]~1))
+
+alt <- dplyr::mutate(alt,AL_alt=(mean_n(alt[,22:30],9,digits=4)))
+allostatic$AL_alt <- alt$AL_alt
+```
+
+**Adding both versions of allostatic laod back to BA dataframe and exporting**
+
+```{r}
+allostatic <- dplyr::select(allostatic,SEQN,AL,AL_alt)
+BA_NHANES_Parity <- dplyr::left_join(BA_NHANES_Parity,allostatic,by="SEQN")
+save(BA_NHANES_Parity, file="/Users/wjh180/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
+```
+
