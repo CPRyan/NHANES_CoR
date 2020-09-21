@@ -34,9 +34,6 @@ df <- within(df, smoking <- relevel(smoking, ref = "0"))
 df$DMDEDUC2 <- as.factor(df$DMDEDUC2)
 df <- within(df, DMDEDUC2 <- relevel(DMDEDUC2, ref = "5"))
 
-#Make pregnancy status numeric
-df$Pregnant <- as.numeric(df$Pregnant)
-
 #Make menopause factor
 df$menopause <- as.factor(df$menopause)
 df <- within(df, menopause <- relevel(menopause, ref = "0"))
@@ -45,8 +42,14 @@ df <- within(df, menopause <- relevel(menopause, ref = "0"))
 df$livebirths_dichot <- as.factor(df$livebirths_dichot)
 df <- within(df, livebirths_dichot <- relevel(livebirths_dichot, ref = "0"))
 
+#Update RIDEXPRG variable
+
+df <- df %>%
+  mutate(RIDEXPRG = case_when(RIDEXPRG == 3 ~3, RIAGENDR == 2 & RIDAGEYR > 59 & RIDAGEYR <= 84 ~ 2, RIDEXPRG == 1 ~ 1,RIDEXPRG == 2 ~ 2)) %>%
+  mutate_at(vars(RIDEXPRG), funs(as.factor))
+
 #Make LM resid variable
-df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & Pregnant == 2 & RIAGENDR == 2 & livebirths >-1 & livebirths <7)
+df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & livebirths <7)
 df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, BMI, INDFMPIR, RIDRETH1, smoking, DMDEDUC2,LM,KDM,LOG_HD))
 lm2 <- lm(LM~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
@@ -89,7 +92,7 @@ base <- svydesign(id      = ~SDMVPSU,
                   data    = df)
 
 #### Excluding 7+ live births
-nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 7 & Pregnant == 2)
+nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 7 & RIDEXPRG == 2)
 
 #### Primary analyses -- all covariates 
 summary(LM1 <- svyglm(LM_age_resid ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
@@ -102,7 +105,7 @@ summary(HD1 <- svyglm(HD_age_resid ~ livebirths*menopause + livebirths2*menopaus
 summary(KDM1 <- svyglm(KDM_age_resid ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df))
 
 #### Not excluding 7+ live births
-nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & Pregnant == 2)
+nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & RIDEXPRG == 2)
 
 #### Primary analyses -- all covariates 
 summary(LM1 <- svyglm(LM_age_resid ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df))
@@ -117,7 +120,7 @@ summary(KDM1 <- svyglm(KDM_age_resid ~ livebirths*menopause + livebirths2*menopa
 #### Number of live births histogram
 
 df2 <- df %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, BMI, INDFMPIR, RIDRETH1, smoking, DMDEDUC2,LM,KDM,LOG_HD))
-df3 <- filter(df2, RIDAGEYR>17 & RIDAGEYR <= 84 & Pregnant == 2 & RIAGENDR == 2 & livebirths >-1 & livebirths <7)
+df3 <- filter(df2, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & livebirths < 8)
 
 #write to csv for waylon to calculate biomarker stats for final sample
 #write.csv(df3, "final_analytical_sample_041920.csv")
@@ -131,16 +134,16 @@ ggplot(df3, aes(x=livebirths, fill = menopause)) +
   theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18))
 
 #### Sample size funnel (starting with 62,160)
-df2 <- filter(df, LM >0)
-df3 <- filter(df2, RIAGENDR ==2)
-df4 <- filter(df3, RIDAGEYR>17 & RIDAGEYR <= 84 & Pregnant == 2)
-df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause,LM,KDM,LOG_HD))
-df6 <- filter(df5, livebirths <7)
+df2 <- filter(df, LM > 0)
+df3 <- filter(df2, RIAGENDR == 2)
+df4 <- filter(df3, RIDAGEYR > 17 & RIDAGEYR <= 84 & RIDEXPRG == 2)
+df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause, LM, KDM, LOG_HD))
+df6 <- filter(df5, livebirths < 8)
 
 ##Analyses: Time since last birth
 
 #### Excluding 7+ live births
-nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 7 & Pregnant == 2)
+nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 7 & RIDEXPRG == 2)
 
 #### YEARS
 #### Primary analyses -- all covariates 
