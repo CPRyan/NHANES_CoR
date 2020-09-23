@@ -12,7 +12,9 @@ CHANGE LOG
 
 2020_09_16: Changed KDM code to calcualte all model features using only women with complete biomarker data. Changed final export to pipe out an R file instead of the convaluted SPSS files. Changed how pregnancy variable was coded in analytical sample to be nonpregnant for women aged 60 or older and missing for other women or women with uncertain status. only include women with missing data instead of recoding those with uncertain status as nonpregnant.Changed how pregnacy variable was coded in reference sample to be nonpregnant for women aged 60 or older and missing for other women or women with uncertain status.  
 
-2020_09_18: Added code to calculate allostatic load based on distribution of biomarkers in nonpregnant women aged 18-84 (N=5870)
+2020_09_18: Added code to calculate allostatic load based on distribution of biomarkers in nonpregnant women aged 18-84 (N=5870).
+
+2020_09-23: Added a standardization step to homeostatic dysregulation construction. Specifically, the analysis proceeds by first pulling out the reference subset (N=481), merging this with the sample of women aged 18-84 with complete biomarker data (N=5870), standarizing in this merged sample, re-extracting out the reference subset, and then proceeding to calculate HD using the standardized biomarkers. In my tests this only changes the scale of HD. The variance-covariance matrix remains the same, but the correlation with age seems to improve. 
 
 **Activating RNHANES Package** 
 
@@ -232,9 +234,9 @@ In addition to the NHANES continuous panels, I also need to download data from N
 NOTE: I may need to occassionally change the file path depending on what drive the USB is assigned. 
 
 ```{r}
-adult <- read.csv(file.choose(),header=TRUE,sep=",")
-exam <- read.csv(file.choose(),header=TRUE,sep=",")
-lab <- read.csv(file.choose(),header=TRUE,sep=",")
+adult <- read.csv(file = "/Users/wjh180/Box/Working Files/NHANES III Datafiles/adult.csv" ,header=TRUE,sep=",")
+exam <- read.csv(file = "/Users/wjh180/Box/Working Files/NHANES III Datafiles/exam.csv",header=TRUE,sep=",")
+lab <- read.csv(file = "/Users/wjh180/Box/Working Files/NHANES III Datafiles/lab.csv",header=TRUE,sep=",")
 ```
 
 #Extracting demographic and body measure data from NHANES III#
@@ -391,11 +393,10 @@ Phenotypic Age is calculated based on parameters published in the supplemental m
 
 
 ```{r}
-#Using Winsorized Data 
 BA_NHANES_Parity <- dplyr::select(Analysis_Win_women,SEQN,WAVE,Age,Gender,Pregnant,BMI,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
 
 #Subsetting data
-BA_NHANES_Parity <- subset(BA_NHANES_Parity,Pregnant==2 & Age<=84)
+BA_NHANES_Parity <- subset(BA_NHANES_Parity,Pregnant==2 & Age<=84 & Age>=18)
 BA_NHANES_Parity <- BA_NHANES_Parity[complete.cases(BA_NHANES_Parity),]
 dim(BA_NHANES_Parity)
 
@@ -432,12 +433,27 @@ dim(Reference_HD_women)
 #dim(Reference_HD_men)
 ```
 
+**Combining Reference Sample with Analytical Sample and Standardizing**
+
+```{r}
+#Reference_HD_women <- dplyr::select(Reference_HD_women,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
+#Reference_HD_women <- dplyr::mutate(Reference_HD_women,SAMPLE=Albumin*0)
+
+#Analytical_HD_women <- dplyr::select(BA_NHANES_Parity,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
+#Analytical_HD_women <- dplyr::mutate(Analytical_HD_women,SAMPLE=Albumin*0+1)
+
+#Combo_women <- dplyr::bind_rows(Reference_HD_women,Analytical_HD_women)
+#Combo_women$SAMPLE <- as.numeric(Combo_women$SAMPLE)
+
+#Combo_women_standard <- as.data.frame(scale(Combo_women))
+```
+
 
 **Computing Reference Mean and Variance-Covariance Matrix**
 
 ```{r}
+#Reference_HD_women <- subset(Combo_women_standard,SAMPLE<0)
 Reference_HD_women <- dplyr::select(Reference_HD_women,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
-
 #Reference_HD_men <- dplyr::select(Reference_HD_men,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
 
 #Young healthy mean for women and men 
@@ -461,8 +477,11 @@ S_inv_women <- solve(S_women)
 **Computing HD for Participants in Analytical Sample**
 
 ```{r}
+#BA_HD_Calc_women <- subset(Combo_women_standard,SAMPLE>0)
+#BA_HD_Calc_women$SEQN <- BA_NHANES_Parity$SEQN
+
 BA_HD_Calc_women <- subset(BA_NHANES_Parity,Gender==2)
-# BA_HD_Calc_men <- subset(BA_NHANES_Parity,Gender==1)
+#BA_HD_Calc_men <- subset(BA_NHANES_Parity,Gender==1)
 
 BA_HD_Calc2_women <- dplyr::select(BA_HD_Calc_women,Albumin,PHENO_Creatinine,PHENO_Glucose,Ln_CRP,Lymphocyte_percent,MCV,Red_Cell_Width,Alkaline_Phosphatase,White_Count)
 BA_HD_Calc2_women <- BA_HD_Calc2_women[complete.cases(BA_HD_Calc2_women),]
@@ -587,9 +606,8 @@ BAe_women <- unlist(BAe_women)
 This block is somewhat limited as I've resricted the calculation to only include those individuals with complete data. This amount might be increased with multiple imputation or with a weighting strategy, but I have not explored those approaches yet. 
 
 ```{r}
-
 #Subseting the data again to only include those cases with full data.  
-# subset2_men <- subset_men[complete.cases(subset_men),]
+#subset2_men <- subset_men[complete.cases(subset_men),]
 subset2_women <- subset_women[complete.cases(subset_women),]
 
 # i <- 1:nrow(subset2_men)
@@ -643,7 +661,7 @@ If your "mydata" files are already structured as a dataframe you could simply ad
 
 ```{r}
 #hold_men <- dplyr::select(hold_men,SEQN)
-# hold_men$KDM <- KDM_men
+#hold_men$KDM <- KDM_men
 
 hold_women <- dplyr::select(hold_women,SEQN)
 hold_women$KDM <- KDM_women
@@ -708,7 +726,6 @@ allostatic <- dplyr::mutate(allostatic, AL_alkaline= case_when(Alkaline_Phosphat
                                                  Alkaline_Phosphatase>=Alkaline_risk[1]~1)) 
 allostatic <- dplyr::mutate(allostatic, AL_WBC= case_when(White_Count<WBC_risk[1]~0,
                                             White_Count>=WBC_risk[1]~1))
-allostatic <- dplyr::mutate(allostatic,AL_allostatic=(mean_n(allostatic[,22:30],9,digits=4)))
 ```
 
 **Calculating allostatic load** 

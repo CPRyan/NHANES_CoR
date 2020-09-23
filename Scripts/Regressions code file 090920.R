@@ -6,13 +6,9 @@ library(survey)
 library(foreign)
 library(psych)
 
-# Remove "/Documents". I had to add this to get it to run on my office Mac -WJH
-# NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_051720.csv", header=TRUE)
-# BA <- load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
-# df <- merge (NHANES, BA, by = "SEQN", all = TRUE)
-
-NHANES <- read.csv("~/GitHub/NHANES_CoR/Data/NHANES_090920.csv", header=TRUE)
-BA <- load("~/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
+#Remove "/Documents". I had to add this to get it to run on my office Mac -WJH
+NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_090920.csv", header=TRUE)
+load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
 
 df <- merge (NHANES, BA_NHANES_Parity, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="PhenoAge"] <- "LM"
@@ -51,7 +47,7 @@ df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, BMI, INDFM
 lm2 <- lm(LM~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df3, resids)
-resids2 <- resids[,c(1,49)]
+resids2 <- resids[,c(1,51)]
 df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "LM_age_resid"
 
@@ -59,7 +55,7 @@ colnames(df)[colnames(df)=="lm2$residuals"] <- "LM_age_resid"
 lm2 <- lm(KDM~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df3, resids)
-resids2 <- resids[,c(1,49)]
+resids2 <- resids[,c(1,51)]
 df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "KDM_age_resid"
 
@@ -67,7 +63,7 @@ colnames(df)[colnames(df)=="lm2$residuals"] <- "KDM_age_resid"
 lm2 <- lm(LOG_HD~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df3, resids)
-resids2 <- resids[,c(1,49)]
+resids2 <- resids[,c(1,51)]
 df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "HD_age_resid"
 
