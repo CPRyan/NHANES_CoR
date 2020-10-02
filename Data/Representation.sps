@@ -1,11 +1,12 @@
 SET DECIMAL=DOT.
 
-DATA LIST FILE= "/Users/wjh180/Documents/GitHub/NHANES_CoR/Data/Representation.txt"  free (",")
+DATA LIST FILE= "~/Documents/GitHub/NHANES_CoR/Data/Representation.txt"  free (",")
 ENCODING="Locale"
 / X SEQN SDDSRVYR RIAGENDR RIDAGEYR RIDRETH1 DMDEDUC2 INDFMPIR RIDEXPRG 
- WTMEC2YR SDMVPSU SDMVSTRA timespreg livebirths mensregularity 
- irregreason everpreg agelastbirth menopause monthssincebirth SMQ020 
- SMQ040 smoking livebirths_dichot yearssincelastbirth SAMPLE 
+ WTMEC2YR SDMVPSU SDMVSTRA WTMEC4YR timespreg livebirths 
+ mensregularity irregreason everpreg agelastbirth menopause 
+ monthssincebirth SMQ020 SMQ040 smoking livebirths_dichot 
+ yearssincelastbirth SAMPLE 
   .
 
 VARIABLE LABELS
@@ -21,6 +22,7 @@ X "X"
  WTMEC2YR "WTMEC2YR" 
  SDMVPSU "SDMVPSU" 
  SDMVSTRA "SDMVSTRA" 
+ WTMEC4YR "WTMEC4YR" 
  timespreg "timespreg" 
  livebirths "livebirths" 
  mensregularity "mensregularity" 
@@ -37,10 +39,10 @@ X "X"
  SAMPLE "SAMPLE" 
  .
 VARIABLE LEVEL X, SEQN, SDDSRVYR, RIAGENDR, RIDAGEYR, RIDRETH1, DMDEDUC2, INDFMPIR, 
- RIDEXPRG, WTMEC2YR, SDMVPSU, SDMVSTRA, timespreg, livebirths, 
- mensregularity, irregreason, everpreg, agelastbirth, menopause, 
- monthssincebirth, SMQ020, SMQ040, smoking, livebirths_dichot, 
- yearssincelastbirth, SAMPLE 
+ RIDEXPRG, WTMEC2YR, SDMVPSU, SDMVSTRA, WTMEC4YR, timespreg, 
+ livebirths, mensregularity, irregreason, everpreg, agelastbirth, 
+ menopause, monthssincebirth, SMQ020, SMQ040, smoking, 
+ livebirths_dichot, yearssincelastbirth, SAMPLE 
  (scale).
 
 EXECUTE.

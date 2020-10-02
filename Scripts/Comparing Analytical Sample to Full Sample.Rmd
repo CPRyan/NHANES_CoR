@@ -1,0 +1,45 @@
+---
+title: "Comparing Analytical Sample to Full Sample"
+author: "Waylon J. Hastings"
+date: "10/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+**Loading datafiles**
+
+```{r}
+load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
+NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_090920.csv", header=TRUE)
+```
+
+**Subsetting NHANES**
+
+```{r}
+library(dplyr)
+Compare <- subset(NHANES, RIAGENDR==2)
+#Recoding pregnancy and creating SAMPLE variable to distiguish full sample from analytical sample 
+Compare <- dplyr::mutate(Compare, RIDEXPRG = case_when(RIDEXPRG==3 ~3, RIAGENDR==2 & RIDAGEYR>59 & RIDAGEYR<=84~2, RIDEXPRG==1~1,RIDEXPRG==2~2),SAMPLE=SEQN*0+1)
+Compare <- subset(Compare,RIDAGEYR>17 & RIDAGEYR<=84 & RIDEXPRG==2)
+```
+
+**Transforming analytical dataset to allow for merge with full dataset**
+
+```{r}
+Analytical <- dplyr::left_join(BA_NHANES_Parity,NHANES,by="SEQN")
+Analytical <- dplyr::select(Analytical,X,SEQN,SDDSRVYR:yearssincelastbirth)
+Analytical <- dplyr::mutate(Analytical,SAMPLE=SEQN*0)
+```
+
+**Merging datasets and exporting to SPSS for Chi-Square tests (because it's easier than learning how to do it in R)**
+
+```{r}
+Compare <- dplyr::bind_rows(Analytical,Compare)
+library(foreign)
+write.foreign(Compare,"~/Documents/GitHub/NHANES_CoR/Data/Representation.txt","~/Documents/GitHub/NHANES_CoR/Data/Representation.sps",package="SPSS")
+```
+
