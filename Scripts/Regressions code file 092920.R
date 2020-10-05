@@ -208,7 +208,8 @@ dfcor <- dfcor %>% rename(
   "Age" = RIDAGEYR,
   "HD (adjusted)" = HD_age_resid,
   "LM (adjusted)" = LM_age_resid,
-  "KDM (adjusted)" = KDM_age_resid
+  "KDM (adjusted)" = KDM_age_resid,
+  "AL (adjusted)" = AL_age_resid
 )
 
 pairs.panels(dfcor, stars= TRUE, method = "pearson", hist.col = "gray", cex.labels=1.9, ellipses = FALSE)
