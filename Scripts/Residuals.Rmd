@@ -139,6 +139,8 @@ colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid_premeno"
 
 df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & menopause==1)
 df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
+
+#Make LM resid variable
 lm2 <- lm(LM~RIDAGEYR, data = df3)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df3, resids)
@@ -178,6 +180,8 @@ df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 &
 df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
 df4 <- filter(df3, livebirths < 8)
 df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause, LM))
+
+#Make LM resid variable
 lm2 <- lm(LM~RIDAGEYR, data = df5)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df5, resids)
@@ -209,6 +213,7 @@ resids2 <- resids[,c(1,64)]
 df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid2"
 ```
+
 #Second Split Residuals: Primary Sample by Menopause Status 
 
 ```{r}
@@ -216,6 +221,8 @@ df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 &
 df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
 df4 <- filter(df3, livebirths < 8)
 df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause, LM))
+
+#Make LM resid variable
 lm2 <- lm(LM~RIDAGEYR, data = df5)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df5, resids)
@@ -251,6 +258,8 @@ df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 &
 df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
 df4 <- filter(df3, livebirths < 8)
 df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause, LM))
+
+#Make LM resid variable
 lm2 <- lm(LM~RIDAGEYR, data = df5)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df5, resids)
@@ -283,7 +292,7 @@ df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid2_postmeno"
 ```
 
-#Third Full Residuals: Sensitivity Analysis Sample (N=5,184)
+#Third Full Residuals: Sensitivity Analysis Sample 1 (N=5,184)
 
 ```{r}
 df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1)
@@ -321,7 +330,7 @@ df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid3"
 ```
 
-#Third Split Residuals: Sensitivity Analysis Sample by Menopause Status 
+#Third Split Residuals: Sensitivity Analysis Sample 1 by Menopause Status 
 
 ```{r} 
 df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & menopause==0)
@@ -361,6 +370,8 @@ colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid3_premeno"
 df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & menopause==1)
 df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
 df4 <- filter(df3, livebirths < 8)
+
+#Make LM resid variable
 lm2 <- lm(LM~RIDAGEYR, data = df4)
 resids <- as.data.frame(lm2$residuals)
 resids <- cbind(df4, resids)
@@ -393,9 +404,127 @@ df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid3_postmeno"
 ```
 
-#Analyses
+#Fourth Full Residuals: Sensitivity Analysis 2 Sample (N=3,587)
 
-**Survey Specs**
+```{r}
+df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1)
+df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
+df4 <- filter(df3, livebirths < 8)
+df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause, LM,yearssincelastbirth))
+
+#Make LM resid variable
+lm2 <- lm(LM~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,88)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "LM_age_resid4"
+
+#Make KDM resid variable
+lm2 <- lm(KDM~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,88)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "KDM_age_resid4"
+
+#Make HD resid variable
+lm2 <- lm(LOG_HD~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,88)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "HD_age_resid4"
+
+#Make AL resid variable
+lm2 <- lm(AL~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,88)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid4"
+```
+
+#Fourth Split Residuals: Sensitivity Analysis 2 Sample by Menopause Status (N=3,587) 
+
+```{r}
+df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & menopause==0)
+df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
+df4 <- filter(df3, livebirths < 8)
+df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause, LM,yearssincelastbirth))
+
+#Make LM resid variable
+lm2 <- lm(LM~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,92)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "LM_age_resid4_premeno"
+
+#Make KDM resid variable
+lm2 <- lm(KDM~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,92)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "KDM_age_resid4_premeno"
+
+#Make HD resid variable
+lm2 <- lm(LOG_HD~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,92)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "HD_age_resid4_premeno"
+
+#Make AL resid variable
+lm2 <- lm(AL~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,92)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid4_premeno"
+
+df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2 & livebirths >-1 & menopause==1)
+df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
+df4 <- filter(df3, livebirths < 8)
+df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause, LM,yearssincelastbirth))
+
+#Make LM resid variable
+lm2 <- lm(LM~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,96)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "LM_age_resid4_postmeno"
+
+#Make KDM resid variable
+lm2 <- lm(KDM~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,96)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "KDM_age_resid4_postmeno"
+
+#Make HD resid variable
+lm2 <- lm(LOG_HD~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,96)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "HD_age_resid4_postmeno"
+
+#Make AL resid variable
+lm2 <- lm(AL~RIDAGEYR, data = df5)
+resids <- as.data.frame(lm2$residuals)
+resids <- cbind(df5, resids)
+resids2 <- resids[,c(1,96)]
+df <- merge (df, resids2, by = "SEQN", all = TRUE)
+colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid4_postmeno"
+```
+
+
+#Survey Specs
 
 ```{r}
 #Create correct sample weights; see https://wwwn.cdc.gov/nchs/nhanes/tutorials/module3.aspx
@@ -414,62 +543,97 @@ base <- svydesign(id      = ~SDMVPSU,
 nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2)
 ```
 
-**Primary Analyses: All covariates**
+
+#Full Sample Analyses 
+
 
 ```{r}
+#Primary Analyses: All covariates 
 summ(LM1 <- svyglm(LM_age_resid2 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(HD1 <- svyglm(HD_age_resid2 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(KDM1 <- svyglm(KDM_age_resid2 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(AL1 <- svyglm(AL_age_resid2 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-```
 
-**Secondary analyses -- age covariate only**
-
-```{r}
+#Sensitivity Analyses 1a: Age covariate only
 summ(LM1 <- svyglm(LM_age_resid3 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(HD1 <- svyglm(HD_age_resid3 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(KDM1 <- svyglm(KDM_age_resid3 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(AL1 <- svyglm(AL_age_resid3 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-```
 
-**Age as covariate only, but with primary analytical sample**
-
-```{r}
+#Sensitivity Analyses 1b: Age covariate only, but with primary analytical sample 
 nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2 & BMI > 0 & INDFMPIR > -1 & !(is.na(smoking)) & !(is.na(DMDEDUC2)))
 
 summ(LM1 <- svyglm(LM_age_resid2 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(HD1 <- svyglm(HD_age_resid2 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(KDM1 <- svyglm(KDM_age_resid2 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(AL1 <- svyglm(AL_age_resid2 ~ livebirths*menopause + livebirths2*menopause + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+
+#Sensitivity Analyses 2: Years since last birth 
+#Excluding 8+ live births
+nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2)
+
+summ(LM1 <- svyglm(LM_age_resid4 ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(HD1 <- svyglm(HD_age_resid4 ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(KDM1 <- svyglm(KDM_age_resid4 ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(AL1 <- svyglm(AL_age_resid4 ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 4)
 ```
 
-**Stratified Analyses: Premenopausal Women**
+
+#Stratified Analyses: Premenopausal Women
+
 
 ```{r}
+#Primary analysis: All Covariates 
 nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2 & menopause ==0)
 summ(LM1 <- svyglm(LM_age_resid2_premeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(LM1 <- svyglm(LM_age_resid3_premeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(HD1 <- svyglm(HD_age_resid2_premeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(HD1 <- svyglm(HD_age_resid3_premeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(KDM1 <- svyglm(KDM_age_resid2_premeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(KDM1 <- svyglm(KDM_age_resid3_premeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(AL1 <- svyglm(AL_age_resid2_premeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+
+#Sensitivity Analysis 1: Age covariate only
+summ(LM1 <- svyglm(LM_age_resid3_premeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(HD1 <- svyglm(HD_age_resid3_premeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(KDM1 <- svyglm(KDM_age_resid3_premeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(AL1 <- svyglm(AL_age_resid3_premeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+
+#Sensitivity Analysis 2: Years since last birth 
+summ(LM1 <- svyglm(LM_age_resid4_premeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(HD1 <- svyglm(HD_age_resid4_premeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(KDM1 <- svyglm(KDM_age_resid4_premeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(AL1 <- svyglm(AL_age_resid4_premeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 4)
+
+#Sensitivity analysis 3: Months since lasts birth 
+summ(LM1 <- svyglm(LM_age_resid4_premeno ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(HD1 <- svyglm(HD_age_resid4_premeno ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(KDM1 <- svyglm(KDM_age_resid4_premeno ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(AL1 <- svyglm(AL_age_resid_premeno ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 4)
 ```
 
-**Stratified Analyses: Postmenopausal Women** 
+
+#Stratified Analyses: Postmenopausal Women 
+
 
 ```{r}
 nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2 & menopause==1)
+#Primary analysis: All covariates 
 summ(LM1 <- svyglm(LM_age_resid2_postmeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(LM1 <- svyglm(LM_age_resid3_postmeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(HD1 <- svyglm(HD_age_resid2_postmeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(HD1 <- svyglm(HD_age_resid3_postmeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(KDM1 <- svyglm(KDM_age_resid2_postmeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(KDM1 <- svyglm(KDM_age_resid3_postmeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(AL1 <- svyglm(AL_age_resid2_postmeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+
+#Sensitivity Analysis 1: Age covariate only
+summ(LM1 <- svyglm(LM_age_resid3_postmeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(HD1 <- svyglm(HD_age_resid3_postmeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(KDM1 <- svyglm(KDM_age_resid3_postmeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(AL1 <- svyglm(AL_age_resid3_postmeno ~ livebirths + livebirths2 + RIDAGEYR, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+
+#Sensitivity Analysis 2: Years since last birth 
+summ(LM1 <- svyglm(LM_age_resid4_postmeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(HD1 <- svyglm(HD_age_resid4_postmeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(KDM1 <- svyglm(KDM_age_resid4_postmeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(AL1 <- svyglm(AL_age_resid4_postmeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 4)
 ```
+
 
 #Plots 
 
@@ -488,6 +652,7 @@ ggplot(df3, aes(x=livebirths, fill = menopause)) +
   theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18)) +
   theme(legend.position = "none")
 ```
+
 
 **Correlation Plots**
 
@@ -517,35 +682,4 @@ dfcor <- dfcor %>% rename(
 )
 
 pairs.panels(dfcor, stars= TRUE, method = "pearson", hist.col = "gray", cex.labels=1.9, ellipses = FALSE)
-```
-
-#Other Things
-
-**Years since last birth analysis** 
-
-```{r}
-#Excluding 8+ live births
-nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2)
-
-#Primary analyses -- all covariates 
-summ(LM1 <- svyglm(LM_age_resid2 ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(HD1 <- svyglm(HD_age_resid2 ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(KDM1 <- svyglm(KDM_age_resid2 ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(AL1 <- svyglm(AL_age_resid2 ~ livebirths*menopause + livebirths2*menopause + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 4)
-
-#Premenopausal women only for HD
-nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2 & menopause == 0)
-summ(HD1 <- svyglm(HD_age_resid2_premeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-
-#Postmenopausal women only for HD
-nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2 & menopause == 1)
-summ(HD1 <- svyglm(HD_age_resid2_postmeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-```
-
-**Months since last birth analyses**
-```{r}
-summ(LM1 <- svyglm(LM_age_resid2 ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(HD1 <- svyglm(HD_age_resid2 ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(KDM1 <- svyglm(KDM_age_resid2 ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
-summ(AL1 <- svyglm(AL_age_resid2 ~ livebirths*monthssincebirth + livebirths2*monthssincebirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 4)
 ```
