@@ -634,6 +634,43 @@ summ(KDM1 <- svyglm(KDM_age_resid4_postmeno ~ livebirths + livebirths2 + livebir
 summ(AL1 <- svyglm(AL_age_resid4_postmeno ~ livebirths + livebirths2 + livebirths*yearssincelastbirth + livebirths2*yearssincelastbirth + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 4)
 ```
 
+#Demographics by Menopausal Status 
+
+```{r}
+df2 <- filter(df, RIDAGEYR>17 & RIDAGEYR <= 84 & RIDEXPRG == 2 & RIAGENDR == 2)
+df3 <- df2 %>% filter(complete.cases(livebirths, menopause, RIDAGEYR, LM))
+df4 <- filter(df3, livebirths < 8)
+df5 <- df4 %>% filter(complete.cases(RIDAGEYR, BMI, INDFMPIR, smoking, DMDEDUC2, RIDRETH1, livebirths, menopause, LM))
+df5 <- dplyr::select(df5,SEQN,menopause,RIDAGEYR,BMI,INDFMPIR,smoking,DMDEDUC2,RIDRETH1,livebirths,livebirths_dichot,LM_age_resid2,HD_age_resid2,KDM_age_resid2,AL_age_resid2,LM,LOG_HD,KDM,AL)
+
+#Continuous variables
+describeBy(df5,df5$menopause)
+#Categorical variables 
+table(df5$smoking,df5$menopause)
+table(df5$DMDEDUC2,df5$menopause)
+table(df5$RIDRETH1,df5$menopause)
+table(df5$livebirths_dichot,df5$menopause)
+
+#Chi-Square tests
+chisq.test(table(df5$smoking,df5$menopause))
+chisq.test(table(df5$DMDEDUC2,df5$menopause))
+chisq.test(table(df5$RIDRETH1,df5$menopause))
+chisq.test(table(df5$livebirths_dichot,df5$menopause))
+
+#t-tests
+t.test(df5$RIDAGEYR~df5$menopause)
+t.test(df5$BMI~df5$menopause)
+t.test(df5$INDFMPIR~df5$menopause)
+t.test(df5$livebirths~df5$menopause)
+
+#Regression for effect of menopause on biological age with adjustment for age, BMI, poverty, smoking, education, and ethnicity.
+summ(LM1 <- svyglm(LM_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(HD1 <- svyglm(HD_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(KDM1 <- svyglm(KDM_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+summ(AL1 <- svyglm(AL_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
+```
+
+
 
 #Plots 
 
