@@ -22,8 +22,10 @@ library(psych)
 library(jtools)
 library(car)
 
-NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_090920.csv", header=TRUE)
-load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
+# NHANES <- read.csv("~/Documents/GitHub/NHANES_CoR/Data/NHANES_090920.csv", header=TRUE)
+NHANES <- read.csv("~/GitHub/NHANES_CoR/Data/NHANES_090920.csv", header=TRUE)
+# load("~/Documents/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
+load("~/GitHub/NHANES_CoR/Data/NHANES_BA_Talia.rda")
 ```
 
 #Housekeeping 
@@ -585,6 +587,7 @@ summ(AL1 <- svyglm(AL_age_resid4 ~ livebirths*menopause + livebirths2*menopause 
 ```{r}
 #Primary analysis: All Covariates 
 nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2 & menopause ==0)
+
 summ(LM1 <- svyglm(LM_age_resid2_premeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(HD1 <- svyglm(HD_age_resid2_premeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(KDM1 <- svyglm(KDM_age_resid2_premeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
@@ -662,8 +665,12 @@ t.test(df5$RIDAGEYR~df5$menopause)
 t.test(df5$BMI~df5$menopause)
 t.test(df5$INDFMPIR~df5$menopause)
 t.test(df5$livebirths~df5$menopause)
+t.test(df5$LM_age_resid2~df5$menopause)
 
 #Regression for effect of menopause on biological age with adjustment for age, BMI, poverty, smoking, education, and ethnicity.
+
+nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2)
+
 summ(LM1 <- svyglm(LM_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(HD1 <- svyglm(HD_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(KDM1 <- svyglm(KDM_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
