@@ -525,7 +525,6 @@ df <- merge (df, resids2, by = "SEQN", all = TRUE)
 colnames(df)[colnames(df)=="lm2$residuals"] <- "AL_age_resid4_postmeno"
 ```
 
-
 #Survey Specs
 
 ```{r}
@@ -535,14 +534,20 @@ df <- df %>%
          WTMEC12YR = ifelse(SDDSRVYR == 1 | SDDSRVYR == 2, (WTMEC4YR/3), WTMEC12YR),
          WTMEC12YR = ifelse(SDDSRVYR == 3 | SDDSRVYR == 4 | SDDSRVYR == 5 | SDDSRVYR == 6, (WTMEC2YR/6), WTMEC12YR))
 
+#write this df to .dta
+#write.dta(df, "NHANES_repro_file_101620.dta")
+
 #Set survey specs
 base <- svydesign(id      = ~SDMVPSU,
                   strata  = ~SDMVSTRA,
                   weights = ~WTMEC12YR,
                   nest    = TRUE,                  
                   data    = df)
-#### Excluding 8+ live births
+
+#Excluding 8+ live births
 nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2)
+
+
 ```
 
 
@@ -618,6 +623,7 @@ summ(AL1 <- svyglm(AL_age_resid_premeno ~ livebirths*monthssincebirth + livebirt
 
 ```{r}
 nhanesDesign1<- subset(base, RIDAGEYR > 17 & RIDAGEYR <=84 & RIAGENDR == 2 & livebirths > -1 & livebirths < 8 & RIDEXPRG == 2 & menopause==1)
+
 #Primary analysis: All covariates 
 summ(LM1 <- svyglm(LM_age_resid2_postmeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 summ(HD1 <- svyglm(HD_age_resid2_postmeno ~ livebirths + livebirths2 + RIDAGEYR + BMI + BMI2 + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
@@ -677,8 +683,6 @@ summ(KDM1 <- svyglm(KDM_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smo
 summ(AL1 <- svyglm(AL_age_resid2 ~ menopause + RIDAGEYR + BMI + INDFMPIR + smoking + DMDEDUC2 + RIDRETH1, design = nhanesDesign1, data = df), confint = TRUE, digits = 3)
 ```
 
-
-
 #Plots 
 
 **Number of Live Births Histogram**
@@ -726,4 +730,67 @@ dfcor <- dfcor %>% rename(
 )
 
 pairs.panels(dfcor, stars= TRUE, method = "pearson", hist.col = "gray", cex.labels=1.9, ellipses = FALSE)
+```
+
+**Marginsplot**
+
+```{r}
+margins <- read_excel("~/GitHub/NHANES_CoR/Data/marginsplot values 101620.xlsx")
+
+pd <- position_dodge(0.15) 
+margins$Group <- as.factor(margins$Group)
+
+LM <- margins %>%
+  filter(Measure == "LM") %>%
+  ggplot(., aes(x =`Live births`, y = Point, group = Group, color = Group)) +
+  geom_line(size = 1.4) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = Point - SE, ymax = Point + SE), width = 0.1, position = pd, size = 1) +
+  theme_classic() + 
+  scale_color_grey() + 
+  ylab("LM age acceleration")  +
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18)) +
+  scale_x_continuous(breaks = c(0:7), labels = c(0:7)) +
+  theme(legend.position = "none")
+
+KDM <- margins %>%
+  filter(Measure == "KDM") %>%
+  ggplot(., aes(x =`Live births`, y = Point, group = Group, color = Group)) +
+  geom_line(size = 1.4) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = Point - SE, ymax = Point + SE), width = 0.1, position = pd, size = 1) +
+  theme_classic() + 
+  scale_color_grey() + 
+  ylab("KDM age acceleration")  +
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18)) +
+  scale_x_continuous(breaks = c(0:7), labels = c(0:7)) +
+  theme(legend.position = "none")
+
+HD <- margins %>%
+  filter(Measure == "HD") %>%
+  ggplot(., aes(x =`Live births`, y = Point, group = Group, color = Group)) +
+  geom_line(size = 1.4) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = Point - SE, ymax = Point + SE), width = 0.1, position = pd, size = 1) +
+  theme_classic() + 
+  scale_color_grey() + 
+  ylab("HD age acceleration")  +
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18)) +
+  scale_x_continuous(breaks = c(0:7), labels = c(0:7)) +
+  theme(legend.position = "none")
+
+AL <- margins %>%
+  filter(Measure == "AL") %>%
+  ggplot(., aes(x =`Live births`, y = Point, group = Group, color = Group)) +
+  geom_line(size = 1.4) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = Point - SE, ymax = Point + SE), width = 0.1, position = pd, size = 1) +
+  theme_classic() + 
+  scale_color_grey() + 
+  ylab("AL age acceleration")  +
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18)) +
+  scale_x_continuous(breaks = c(0:7), labels = c(0:7), limits = c(0,7)) +
+  theme(legend.position = "none")
+
+
 ```
