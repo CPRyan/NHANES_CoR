@@ -14,7 +14,7 @@ CHANGE LOG
 
 2020_09_18: Added code to calculate allostatic load based on distribution of biomarkers in nonpregnant women aged 18-84 (N=5870).
 
-2020_09-23: Added a standardization step to homeostatic dysregulation construction. Specifically, the analysis proceeds by first pulling out the reference subset (N=481), merging this with the sample of women aged 18-84 with complete biomarker data (N=5870), standarizing in this merged sample, re-extracting out the reference subset, and then proceeding to calculate HD using the standardized biomarkers. In my tests this only changes the scale of HD. The variance-covariance matrix remains the same, but the correlation with age seems to improve. 
+2020_09_23: Added a standardization step to homeostatic dysregulation construction. Specifically, the analysis proceeds by first pulling out the reference subset (N=481), merging this with the sample of women aged 18-84 with complete biomarker data (N=5870), standarizing in this merged sample, re-extracting out the reference subset, and then proceeding to calculate HD using the standardized biomarkers. In my tests this only changes the scale of HD. The variance-covariance matrix remains the same. The correlation with age seems to improve a bit, but the results in the text did not change.Therefore I am not going to use the standardization step since I didn't in my PNE publication, but will keep the code for now. 
 
 **Activating RNHANES Package** 
 
